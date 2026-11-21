@@ -561,6 +561,18 @@
         </div>
       </div>
 
+      <div class="nav-label">MENU UTAMA</div>
+
+      <a href="#overview" class="nav-item active" data-view="overview">
+        <span class="nav-icon">▦</span>
+        Overview
+      </a>
+
+      <a href="#video-manager" class="nav-item" data-view="video-manager">
+        <span class="nav-icon">▶</span>
+        Video Manager
+      </a>
+
       <div class="nav-label">PENGATURAN</div>
 
       <a href="#page-manager" class="nav-item" data-view="page-manager">
@@ -636,53 +648,48 @@
 
         <div class="stat-card">
           <div class="stat-icon">◉</div>
-          <div class="stat-label">Active Ads</div>
-          <div class="stat-value">—</div>
+          <div class="stat-label">Active Videos</div>
+          <div class="stat-value" id="activeVideosValue">—</div>
         </div>
 
       </section>
 
-      <h2 class="section-title">Management Modules</h2>
-
-      <section class="modules-grid">
-
-        <article class="module-card">
-          <h3>Page Manager</h3>
-          <p>Mengelola daftar halaman player dan status aktifnya.</p>
-          <span class="module-status">Belum dikonfigurasi</span>
-        </article>
-
-        <article class="module-card">
-          <h3>Video Manager</h3>
-          <p>Mengelola video ID, URL CDN, dan status video.</p>
-          <span class="module-status">Belum dikonfigurasi</span>
-        </article>
-
-        <article class="module-card">
-          <h3>Ads Manager</h3>
-          <p>Mengatur iklan global untuk seluruh halaman player.</p>
-          <span class="module-status">Belum dikonfigurasi</span>
-        </article>
-
-        <article class="module-card">
-          <h3>Histats Manager</h3>
-          <p>Mengatur kode Histats untuk statistik pengunjung.</p>
-          <span class="module-status">Belum dikonfigurasi</span>
-        </article>
-
-        <article class="module-card">
-          <h3>General Settings</h3>
-          <p>Mengatur konfigurasi umum sistem player.</p>
-          <span class="module-status">Belum dikonfigurasi</span>
-        </article>
-
-        <article class="module-card">
-          <h3>Click Statistics</h3>
-          <p>Ringkasan statistik yang akan disiapkan pada tahap berikutnya.</p>
-          <span class="module-status">Belum dikonfigurasi</span>
-        </article>
-
-      </section>
+      <h2 class="section-title">Quick Video Publisher</h2>
+      <div class="form-card quick-publisher-card" id="videoFormCard">
+        <h2 id="videoFormTitle">Tambahkan Video Baru</h2>
+        <form id="videoForm" autocomplete="off">
+          <div class="video-form-grid">
+            <div class="video-field-full">
+              <label class="field-label" for="videoIdInput">URL Video Videy</label>
+              <input class="text-input" id="videoIdInput" name="video_url_input" type="text" inputmode="text" autocapitalize="off" spellcheck="false" maxlength="500" placeholder="Masukkan slug atau URL Videy lengkap" required>
+              <p class="video-help">Bisa isi Video ID saja (contoh: 10SyFNmx1) atau URL lengkap dari cdn.videy.co / cdn2.videy.co. Jika hanya memasukkan ID, URL otomatis menggunakan cdn2.videy.co.</p>
+            </div>
+            <div class="video-field-full">
+              <label class="field-label" for="videoPageSelect">Facebook Page</label>
+              <select class="video-select" id="videoPageSelect" name="page_id" required>
+                <option value="">Memuat Facebook Page...</option>
+              </select>
+            </div>
+            <div class="video-field-full form-actions">
+              <button type="submit" class="primary-button" id="saveVideoButton">Simpan &amp; Auto Publish</button>
+            </div>
+          </div>
+          <input id="videoTitleInput" type="hidden" value="">
+          <input id="videoUrlInput" type="hidden" value="">
+          <button type="button" id="cancelVideoButton" hidden>Batal</button>
+        </form>
+      </div>
+      <p class="manager-message" id="videoManagerMessage" role="status" aria-live="polite"></p>
+      <p class="manager-message" id="publishConfigMessage" role="status" aria-live="polite"></p>
+      <div class="published-url-card" id="publishedUrlCard" hidden>
+        <div class="published-url-title">✓ Video berhasil disimpan &amp; dipublikasikan</div>
+        <label class="field-label" for="publishedPlayerUrl">Player URL hasil publish</label>
+        <input class="published-url-input" id="publishedPlayerUrl" type="text" readonly>
+        <div class="published-url-actions">
+          <button type="button" id="copyPublishedUrlButton">Salin URL</button>
+          <button type="button" id="openPublishedUrlButton">Buka Player</button>
+        </div>
+      </div>
       </section>
 
       <section class="view-section" id="pageManagerView" hidden>
@@ -742,13 +749,13 @@
       <section class="view-section" id="videoManagerView">
         <header class="topbar">
           <div>
-            <h1 class="page-title">Video Publisher</h1>
-            <p class="page-description">Tempel URL Videy, pilih Facebook Page, lalu simpan. Config akan otomatis dipublikasikan.</p>
+            <h1 class="page-title">Video Manager</h1>
+            <p class="page-description">Kelola video yang sudah tersimpan, status, dan Player URL.</p>
           </div>
           <div class="status"><span class="status-dot"></span> Ready</div>
         </header>
 
-        <div class="manager-toolbar" hidden>
+        <div class="manager-toolbar">
           <div>
             <h2 class="section-title" style="margin-bottom:5px">Daftar Video</h2>
             <p class="page-description" style="margin-top:0">URL CDN disimpan permanen saat video ditambahkan atau diperbarui.</p>
@@ -756,45 +763,7 @@
           <button type="button" class="primary-button" id="addVideoButton">＋ Add Video</button>
         </div>
 
-        <div class="form-card quick-publisher-card" id="videoFormCard">
-          <h2>Tambahkan Video Baru</h2>
-          <form id="videoForm" autocomplete="off">
-            <div class="video-form-grid">
-              <div class="video-field-full">
-                <label class="field-label" for="videoIdInput">URL Video Videy</label>
-                <input class="text-input" id="videoIdInput" name="video_url_input" type="text" inputmode="text" autocapitalize="off" spellcheck="false" maxlength="500" placeholder="Masukkan slug atau URL Videy lengkap" required>
-                <p class="video-help">Bisa isi Video ID saja (contoh: 10SyFNmx1) atau URL lengkap dari cdn.videy.co / cdn2.videy.co. Jika hanya memasukkan ID, URL otomatis menggunakan cdn2.videy.co.</p>
-              </div>
-              <div class="video-field-full">
-                <label class="field-label" for="videoPageSelect">Facebook Page</label>
-                <select class="video-select" id="videoPageSelect" name="page_id" required>
-                  <option value="">Memuat Facebook Page...</option>
-                </select>
-              </div>
-              <div class="video-field-full form-actions">
-                <button type="submit" class="primary-button" id="saveVideoButton">Simpan &amp; Auto Publish</button>
-              </div>
-            </div>
-            <input id="videoTitleInput" type="hidden" value="">
-            <input id="videoUrlInput" type="hidden" value="">
-            <button type="button" id="cancelVideoButton" hidden>Batal</button>
-          </form>
-        </div>
-
-        <p class="manager-message" id="videoManagerMessage" role="status" aria-live="polite"></p>
-        <p class="manager-message" id="publishConfigMessage" role="status" aria-live="polite"></p>
-
-        <div class="published-url-card" id="publishedUrlCard" hidden>
-          <div class="published-url-title">✓ Video berhasil disimpan &amp; dipublikasikan</div>
-          <label class="field-label" for="publishedPlayerUrl">Player URL hasil publish</label>
-          <input class="published-url-input" id="publishedPlayerUrl" type="text" readonly>
-          <div class="published-url-actions">
-            <button type="button" id="copyPublishedUrlButton">Salin URL</button>
-            <button type="button" id="openPublishedUrlButton">Buka Player</button>
-          </div>
-        </div>
-
-        <div class="table-card" hidden>
+        <div class="table-card">
           <div class="table-wrap">
             <table class="video-table">
               <thead>
@@ -859,7 +828,7 @@
       const videoManagerView = document.getElementById("videoManagerView");
       const pageManagerLink = document.querySelector('[data-view="page-manager"]');
       const videoManagerLink = document.querySelector('[data-view="video-manager"]');
-      const overviewLink = document.querySelector('a[href="#overview"]');
+      const overviewLink = document.querySelector('[data-view="overview"]');
       const addPageButton = document.getElementById("addPageButton");
       const pageFormCard = document.getElementById("pageFormCard");
       const pageForm = document.getElementById("pageForm");
@@ -871,6 +840,7 @@
       const pageManagerMessage = document.getElementById("pageManagerMessage");
       const totalPagesValue = document.getElementById("totalPagesValue");
       const totalVideosValue = document.getElementById("totalVideosValue");
+      const activeVideosValue = document.getElementById("activeVideosValue");
       const addVideoButton = document.getElementById("addVideoButton");
       const videoFormCard = document.getElementById("videoFormCard");
       const videoForm = document.getElementById("videoForm");
@@ -996,14 +966,18 @@
       }
 
       function setActiveView(view) {
+        const showOverview = view === "overview";
         const showPages = view === "page-manager";
-        const showVideos = !showPages;
-        overviewView.hidden = true;
+        const showVideos = view === "video-manager";
+        overviewView.hidden = !showOverview;
         pageManagerView.hidden = !showPages;
         videoManagerView.hidden = !showVideos;
+        overviewLink.classList.toggle("active", showOverview);
         pageManagerLink.classList.toggle("active", showPages);
-        if (showPages) loadPages();
-        if (showVideos) loadVideos();
+        videoManagerLink.classList.toggle("active", showVideos);
+        if (showOverview || showPages) loadPages();
+        if (showOverview || showVideos) loadVideos();
+        if (showOverview) loadVideoPageOptions().catch((error) => setVideoManagerMessage(`Gagal memuat Facebook Page: ${error.message}`, "error"));
       }
 
       function resetPageForm() {
@@ -1161,7 +1135,7 @@
         videoForm.reset();
         videoFormTitle.textContent = "Tambah Video";
         saveVideoButton.textContent = "Simpan";
-        videoFormCard.hidden = true;
+        videoFormCard.hidden = false;
       }
 
       function buildVideyUrl(videoId) {
@@ -1263,10 +1237,11 @@
       function renderVideos(videos) {
         videosTableBody.replaceChildren();
         totalVideosValue.textContent = String(videos.length);
+        activeVideosValue.textContent = String(videos.filter((video) => video.is_active).length);
 
         if (!videos.length) {
           const row = document.createElement("tr");
-          const cell = createCell("Belum ada video. Klik Add Video untuk menambahkan.", "empty-row");
+          const cell = createCell("Belum ada video yang tersimpan.", "empty-row");
           cell.colSpan = 8;
           row.appendChild(cell);
           videosTableBody.appendChild(row);
@@ -1379,6 +1354,8 @@
       }
 
       async function openVideoEditForm(video) {
+        setActiveView("overview");
+        window.history.replaceState(null, "", "#overview");
         editingVideoId = video.id;
         videoIdInput.value = video.video_id;
         videoTitleInput.value = video.title;
@@ -1486,12 +1463,7 @@
           accessGranted = true;
           loadingScreen.style.display = "none";
           app.style.display = "block";
-          setActiveView("video-manager");
-          try {
-            await loadVideoPageOptions();
-          } catch (pageLoadError) {
-            setVideoManagerMessage(`Gagal memuat Facebook Page: ${pageLoadError.message}`, "error");
-          }
+          setActiveView("overview");
 
         } catch (error) {
           console.error("Dashboard verification error:", error);
@@ -1545,26 +1517,28 @@
         redirectToLogin();
       });
 
+      overviewLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        setActiveView("overview");
+        window.history.replaceState(null, "", "#overview");
+      });
+
       pageManagerLink.addEventListener("click", (event) => {
         event.preventDefault();
         setActiveView("page-manager");
         window.history.replaceState(null, "", "#page-manager");
       });
 
+      videoManagerLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        setActiveView("video-manager");
+        window.history.replaceState(null, "", "#video-manager");
+      });
 
-      addVideoButton.addEventListener("click", async () => {
-        editingVideoId = null;
-        videoForm.reset();
-        videoFormTitle.textContent = "Tambah Video";
-        saveVideoButton.textContent = "Simpan";
-        setVideoManagerMessage("");
-        try {
-          await loadVideoPageOptions();
-          videoFormCard.hidden = false;
-          videoIdInput.focus();
-        } catch (error) {
-          setVideoManagerMessage(`Gagal memuat Facebook Page: ${error.message}`, "error");
-        }
+      addVideoButton.addEventListener("click", () => {
+        setActiveView("overview");
+        window.history.replaceState(null, "", "#overview");
+        videoIdInput.focus();
       });
 
       cancelVideoButton.addEventListener("click", resetVideoForm);
