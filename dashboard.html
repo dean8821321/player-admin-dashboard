@@ -1025,13 +1025,10 @@
         return `${selectedProvider}${encodeURIComponent(videoId)}.mp4`;
       }
 
-      function validateVideoUrl(value, videoId) {
-        const trimmed = value.trim();
-        if (!trimmed) return buildVideyUrl(videoId);
-
+      function parseVideyUrl(value) {
         let parsed;
         try {
-          parsed = new URL(trimmed);
+          parsed = new URL(value.trim());
         } catch {
           throw new Error("URL video tidak valid.");
         }
@@ -1040,10 +1037,52 @@
         if (parsed.protocol !== "https:" || !allowedHosts.includes(parsed.hostname.toLowerCase())) {
           throw new Error("URL harus menggunakan HTTPS dari cdn.videy.co atau cdn2.videy.co.");
         }
-        if (!parsed.pathname.toLowerCase().endsWith(".mp4")) {
+
+        const fileName = parsed.pathname.split("/").filter(Boolean).pop() || "";
+        if (!fileName.toLowerCase().endsWith(".mp4")) {
           throw new Error("URL video harus mengarah ke file .mp4.");
         }
-        return parsed.href;
+
+        let videoIdFromUrl;
+        try {
+          videoIdFromUrl = decodeURIComponent(fileName.slice(0, -4));
+        } catch {
+          throw new Error("Format Video ID pada URL tidak valid.");
+        }
+
+        if (!/^[A-Za-z0-9_-]+$/.test(videoIdFromUrl)) {
+          throw new Error("URL harus berisi satu Video ID yang valid sebelum .mp4.");
+        }
+
+        return { url: parsed.href, videoId: videoIdFromUrl };
+      }
+
+      function normalizeVideoInput(rawVideoId, rawVideoUrl) {
+        const enteredId = rawVideoId.trim();
+        const enteredUrl = rawVideoUrl.trim();
+
+        if (/^https?:\/\//i.test(enteredId)) {
+          const parsedInput = parseVideyUrl(enteredId);
+          return {
+            videoId: parsedInput.videoId,
+            videoUrl: parsedInput.url
+          };
+        }
+
+        if (!/^[A-Za-z0-9_-]+$/.test(enteredId)) {
+          throw new Error("Masukkan Video ID saja atau URL lengkap Videy yang valid.");
+        }
+
+        if (!enteredUrl) {
+          return { videoId: enteredId, videoUrl: buildVideyUrl(enteredId) };
+        }
+
+        const parsedUrl = parseVideyUrl(enteredUrl);
+        if (parsedUrl.videoId !== enteredId) {
+          throw new Error("Video ID pada URL CDN tidak sama dengan Video ID yang dimasukkan.");
+        }
+
+        return { videoId: enteredId, videoUrl: parsedUrl.url };
       }
 
       async function loadVideoPageOptions(selectedPageId = "") {
@@ -1334,12 +1373,12 @@
       videoForm.addEventListener("submit", async (event) => {
         event.preventDefault();
 
-        const videoId = videoIdInput.value.trim();
+        const rawVideoId = videoIdInput.value.trim();
         const title = videoTitleInput.value.trim();
         const pageId = videoPageSelect.value || null;
 
-        if (!videoId || !title) {
-          setVideoManagerMessage("Video ID dan judul wajib diisi.", "error");
+        if (!rawVideoId || !title) {
+          setVideoManagerMessage("Video ID atau URL lengkap dan judul wajib diisi.", "error");
           return;
         }
 
@@ -1348,7 +1387,9 @@
         setVideoManagerMessage("");
 
         try {
-          const videoUrl = validateVideoUrl(videoUrlInput.value, videoId);
+          const normalizedVideo = normalizeVideoInput(rawVideoId, videoUrlInput.value);
+          const videoId = normalizedVideo.videoId;
+          const videoUrl = normalizedVideo.videoUrl;
 
           const duplicateQuery = await supabaseClient
             .from("videos")
