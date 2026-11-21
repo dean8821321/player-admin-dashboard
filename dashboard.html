@@ -762,8 +762,8 @@
             <div class="video-form-grid">
               <div class="video-field-full">
                 <label class="field-label" for="videoIdInput">URL Video Videy</label>
-                <input class="text-input" id="videoIdInput" name="video_url_input" type="url" maxlength="500" placeholder="Tempel URL https://cdn2.videy.co/xxxxx.mp4" required>
-                <p class="video-help">URL dari cdn.videy.co dan cdn2.videy.co didukung. Jika memakai cdn.videy.co, URL lama tetap disimpan apa adanya.</p>
+                <input class="text-input" id="videoIdInput" name="video_url_input" type="text" inputmode="text" autocapitalize="off" spellcheck="false" maxlength="500" placeholder="Masukkan slug atau URL Videy lengkap" required>
+                <p class="video-help">Bisa isi Video ID saja (contoh: 10SyFNmx1) atau URL lengkap dari cdn.videy.co / cdn2.videy.co. Jika hanya memasukkan ID, URL otomatis menggunakan cdn2.videy.co.</p>
               </div>
               <div class="video-field-full">
                 <label class="field-label" for="videoPageSelect">Facebook Page</label>
@@ -1593,9 +1593,9 @@
         publishedPlayerUrl.value = "";
 
         try {
-          const parsedVideo = parseVideyUrl(pastedUrl);
+          const parsedVideo = normalizeVideoInput(pastedUrl, "");
           const videoId = parsedVideo.videoId;
-          const videoUrl = parsedVideo.url;
+          const videoUrl = parsedVideo.videoUrl;
           const duplicateQuery = await supabaseClient
             .from("videos")
             .select("id, video_id")
