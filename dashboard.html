@@ -335,6 +335,69 @@
       text-align: center;
     }
 
+    .view-section[hidden] { display: none !important; }
+
+    .manager-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .primary-button, .secondary-button, .action-button {
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: background .2s, border-color .2s;
+    }
+
+    .primary-button { background: #1d9b63; color: #fff; }
+    .primary-button:hover { background: #25b777; }
+    .primary-button:disabled, .secondary-button:disabled, .action-button:disabled { opacity: .55; cursor: not-allowed; }
+    .secondary-button { background: #18232e; border-color: #344454; color: #dce5ee; }
+    .secondary-button:hover { background: #223140; }
+
+    .form-card, .table-card {
+      padding: 20px;
+      border: 1px solid #25313d;
+      border-radius: 12px;
+      background: #111821;
+      margin-bottom: 18px;
+    }
+
+    .form-card[hidden] { display: none !important; }
+    .form-card h2 { font-size: 15px; margin-bottom: 16px; }
+    .form-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+    .field-label { display: block; margin-bottom: 8px; color: #aab7c5; font-size: 12px; }
+    .text-input {
+      width: 100%; min-height: 41px; padding: 10px 12px;
+      border: 1px solid #344454; border-radius: 8px;
+      outline: none; background: #0b1219; color: #f1f5f9; font: inherit; font-size: 13px;
+    }
+    .text-input:focus { border-color: #35d28b; box-shadow: 0 0 0 3px rgba(53,210,139,.12); }
+    .form-actions { display: flex; gap: 8px; }
+    .manager-message { min-height: 20px; margin: 0 0 12px; color: #8fa0b1; font-size: 12px; }
+    .manager-message.error { color: #f18b9b; }
+    .manager-message.success { color: #52d99a; }
+    .table-wrap { overflow-x: auto; }
+    .pages-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+    .pages-table th, .pages-table td { padding: 14px 12px; border-bottom: 1px solid #25313d; text-align: left; font-size: 12px; }
+    .pages-table th { color: #8292a3; font-weight: 600; white-space: nowrap; }
+    .pages-table td { color: #dce5ee; }
+    .empty-row { padding: 28px !important; text-align: center !important; color: #8995a5 !important; }
+    .page-status { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+    .page-status.on { background: #10291e; color: #52d99a; }
+    .page-status.off { background: #30251a; color: #e9b66e; }
+    .row-actions { display: flex; gap: 7px; }
+    .action-button { padding: 7px 10px; background: #18232e; border-color: #344454; color: #dce5ee; }
+    .action-button.delete { color: #f18b9b; border-color: #49313a; background: #21171c; }
+    .action-button:hover { filter: brightness(1.2); }
+
+
     @media (max-width: 900px) {
       .sidebar {
         width: 210px;
@@ -421,10 +484,10 @@
 
       <div class="nav-label">MANAGEMENT</div>
 
-      <div class="nav-item">
+      <a href="#page-manager" class="nav-item" data-view="page-manager">
         <span class="nav-icon">▣</span>
         Page Manager
-      </div>
+      </a>
 
       <div class="nav-item">
         <span class="nav-icon">▶</span>
@@ -468,6 +531,7 @@
 
     <main class="main" id="overview">
 
+      <section class="view-section" id="overviewView">
       <header class="topbar">
         <div>
           <h1 class="page-title">Overview</h1>
@@ -498,7 +562,7 @@
         <div class="stat-card">
           <div class="stat-icon">▣</div>
           <div class="stat-label">Total Pages</div>
-          <div class="stat-value">—</div>
+          <div class="stat-value" id="totalPagesValue">—</div>
         </div>
 
         <div class="stat-card">
@@ -556,6 +620,61 @@
         </article>
 
       </section>
+      </section>
+
+      <section class="view-section" id="pageManagerView" hidden>
+        <header class="topbar">
+          <div>
+            <h1 class="page-title">Page Manager</h1>
+            <p class="page-description">Kelola nama Facebook Page untuk title player.</p>
+          </div>
+          <div class="status"><span class="status-dot"></span> Page Management</div>
+        </header>
+
+        <div class="manager-toolbar">
+          <div>
+            <h2 class="section-title" style="margin-bottom:5px">Daftar Facebook Pages</h2>
+            <p class="page-description" style="margin-top:0">Nama Page akan digunakan bersama ID video pada title player.</p>
+          </div>
+          <button type="button" class="primary-button" id="addPageButton">＋ Add Page</button>
+        </div>
+
+        <div class="form-card" id="pageFormCard" hidden>
+          <h2 id="pageFormTitle">Tambah Facebook Page</h2>
+          <form id="pageForm" autocomplete="off">
+            <div class="form-grid">
+              <div>
+                <label class="field-label" for="pageNameInput">Nama Facebook Page</label>
+                <input class="text-input" id="pageNameInput" name="page_name" type="text" maxlength="120" placeholder="Contoh: Pretty Stars" required>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="primary-button" id="savePageButton">Simpan</button>
+                <button type="button" class="secondary-button" id="cancelPageButton">Batal</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <p class="manager-message" id="pageManagerMessage" role="status" aria-live="polite"></p>
+
+        <div class="table-card">
+          <div class="table-wrap">
+            <table class="pages-table">
+              <thead>
+                <tr>
+                  <th>Page Name</th>
+                  <th>Status</th>
+                  <th>Created At</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="pagesTableBody">
+                <tr><td colspan="4" class="empty-row">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
       <footer class="footer">
         © 2026 Player Admin Dashboard
@@ -592,9 +711,185 @@
       const adminEmail = document.getElementById("adminEmail");
       const adminAvatar = document.getElementById("adminAvatar");
       const logoutButton = document.getElementById("logoutButton");
+      const overviewView = document.getElementById("overviewView");
+      const pageManagerView = document.getElementById("pageManagerView");
+      const pageManagerLink = document.querySelector('[data-view="page-manager"]');
+      const overviewLink = document.querySelector('a[href="#overview"]');
+      const addPageButton = document.getElementById("addPageButton");
+      const pageFormCard = document.getElementById("pageFormCard");
+      const pageForm = document.getElementById("pageForm");
+      const pageFormTitle = document.getElementById("pageFormTitle");
+      const pageNameInput = document.getElementById("pageNameInput");
+      const savePageButton = document.getElementById("savePageButton");
+      const cancelPageButton = document.getElementById("cancelPageButton");
+      const pagesTableBody = document.getElementById("pagesTableBody");
+      const pageManagerMessage = document.getElementById("pageManagerMessage");
+      const totalPagesValue = document.getElementById("totalPagesValue");
+
+      let editingPageId = null;
+      let pagesLoaded = false;
 
       let verificationInProgress = false;
       let accessGranted = false;
+
+      function setManagerMessage(message, type = "") {
+        pageManagerMessage.textContent = message;
+        pageManagerMessage.className = `manager-message ${type}`.trim();
+      }
+
+      function setActiveView(view) {
+        const showPages = view === "page-manager";
+        overviewView.hidden = showPages;
+        pageManagerView.hidden = !showPages;
+        overviewLink.classList.toggle("active", !showPages);
+        pageManagerLink.classList.toggle("active", showPages);
+        if (showPages) loadPages();
+      }
+
+      function resetPageForm() {
+        editingPageId = null;
+        pageForm.reset();
+        pageFormTitle.textContent = "Tambah Facebook Page";
+        savePageButton.textContent = "Simpan";
+        pageFormCard.hidden = true;
+      }
+
+      function formatCreatedAt(value) {
+        if (!value) return "—";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "—";
+        return date.toLocaleString("id-ID", {
+          day: "2-digit", month: "short", year: "numeric",
+          hour: "2-digit", minute: "2-digit"
+        });
+      }
+
+      function createCell(text, className = "") {
+        const cell = document.createElement("td");
+        cell.textContent = text;
+        if (className) cell.className = className;
+        return cell;
+      }
+
+      function renderPages(pages) {
+        pagesTableBody.replaceChildren();
+        totalPagesValue.textContent = String(pages.length);
+
+        if (!pages.length) {
+          const row = document.createElement("tr");
+          const cell = createCell("Belum ada Facebook Page. Klik Add Page untuk menambahkan.", "empty-row");
+          cell.colSpan = 4;
+          row.appendChild(cell);
+          pagesTableBody.appendChild(row);
+          return;
+        }
+
+        pages.forEach((page) => {
+          const row = document.createElement("tr");
+          row.appendChild(createCell(page.page_name));
+
+          const statusCell = document.createElement("td");
+          const status = document.createElement("span");
+          status.className = `page-status ${page.is_active ? "on" : "off"}`;
+          status.textContent = page.is_active ? "ON" : "OFF";
+          statusCell.appendChild(status);
+          row.appendChild(statusCell);
+
+          row.appendChild(createCell(formatCreatedAt(page.created_at)));
+
+          const actionCell = document.createElement("td");
+          const actions = document.createElement("div");
+          actions.className = "row-actions";
+
+          const toggleButton = document.createElement("button");
+          toggleButton.type = "button";
+          toggleButton.className = "action-button";
+          toggleButton.textContent = page.is_active ? "Matikan" : "Aktifkan";
+          toggleButton.addEventListener("click", () => togglePageStatus(page));
+
+          const editButton = document.createElement("button");
+          editButton.type = "button";
+          editButton.className = "action-button";
+          editButton.textContent = "Edit";
+          editButton.addEventListener("click", () => openEditForm(page));
+
+          const deleteButton = document.createElement("button");
+          deleteButton.type = "button";
+          deleteButton.className = "action-button delete";
+          deleteButton.textContent = "Delete";
+          deleteButton.addEventListener("click", () => deletePage(page));
+
+          actions.append(toggleButton, editButton, deleteButton);
+          actionCell.appendChild(actions);
+          row.appendChild(actionCell);
+          pagesTableBody.appendChild(row);
+        });
+      }
+
+      async function loadPages() {
+        if (!accessGranted) return;
+        pagesTableBody.innerHTML = '<tr><td colspan="4" class="empty-row">Memuat data...</td></tr>';
+        setManagerMessage("");
+
+        const { data, error } = await supabaseClient
+          .from("facebook_pages")
+          .select("id, page_name, is_active, created_at")
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Load Facebook Pages error:", error);
+          pagesTableBody.innerHTML = '<tr><td colspan="4" class="empty-row">Gagal memuat data. Periksa koneksi dan kebijakan akses Supabase.</td></tr>';
+          setManagerMessage(error.message, "error");
+          return;
+        }
+
+        pagesLoaded = true;
+        renderPages(data || []);
+      }
+
+      function openEditForm(page) {
+        editingPageId = page.id;
+        pageNameInput.value = page.page_name;
+        pageFormTitle.textContent = "Edit Facebook Page";
+        savePageButton.textContent = "Simpan Perubahan";
+        pageFormCard.hidden = false;
+        pageNameInput.focus();
+      }
+
+      async function togglePageStatus(page) {
+        const { error } = await supabaseClient
+          .from("facebook_pages")
+          .update({ is_active: !page.is_active })
+          .eq("id", page.id);
+
+        if (error) {
+          console.error("Update Page status error:", error);
+          setManagerMessage(`Gagal mengubah status: ${error.message}`, "error");
+          return;
+        }
+
+        setManagerMessage("Status Page berhasil diperbarui.", "success");
+        await loadPages();
+      }
+
+      async function deletePage(page) {
+        const confirmed = window.confirm(`Hapus Facebook Page "${page.page_name}"? Tindakan ini tidak dapat dibatalkan.`);
+        if (!confirmed) return;
+
+        const { error } = await supabaseClient
+          .from("facebook_pages")
+          .delete()
+          .eq("id", page.id);
+
+        if (error) {
+          console.error("Delete Page error:", error);
+          setManagerMessage(`Gagal menghapus Page: ${error.message}`, "error");
+          return;
+        }
+
+        setManagerMessage("Facebook Page berhasil dihapus.", "success");
+        await loadPages();
+      }
 
       function redirectToLogin() {
         window.location.replace("./index.html");
@@ -684,6 +979,84 @@
 
         accessGranted = false;
         redirectToLogin();
+      });
+
+      pageManagerLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        setActiveView("page-manager");
+        window.history.replaceState(null, "", "#page-manager");
+      });
+
+      overviewLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        setActiveView("overview");
+        window.history.replaceState(null, "", "#overview");
+      });
+
+      addPageButton.addEventListener("click", () => {
+        editingPageId = null;
+        pageForm.reset();
+        pageFormTitle.textContent = "Tambah Facebook Page";
+        savePageButton.textContent = "Simpan";
+        pageFormCard.hidden = false;
+        pageNameInput.focus();
+      });
+
+      cancelPageButton.addEventListener("click", resetPageForm);
+
+      pageForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const pageName = pageNameInput.value.trim();
+
+        if (!pageName) {
+          setManagerMessage("Nama Facebook Page wajib diisi.", "error");
+          pageNameInput.focus();
+          return;
+        }
+
+        savePageButton.disabled = true;
+        savePageButton.textContent = "Menyimpan...";
+        setManagerMessage("");
+
+        try {
+          const duplicateQuery = await supabaseClient
+            .from("facebook_pages")
+            .select("id, page_name")
+            .ilike("page_name", pageName);
+
+          if (duplicateQuery.error) throw duplicateQuery.error;
+
+          const duplicate = (duplicateQuery.data || []).some((item) => item.id !== editingPageId);
+          if (duplicate) {
+            setManagerMessage("Nama Facebook Page tersebut sudah terdaftar.", "error");
+            return;
+          }
+
+          const wasEditing = Boolean(editingPageId);
+          let result;
+          if (editingPageId) {
+            result = await supabaseClient
+              .from("facebook_pages")
+              .update({ page_name: pageName })
+              .eq("id", editingPageId);
+          } else {
+            result = await supabaseClient
+              .from("facebook_pages")
+              .insert({ page_name: pageName, is_active: true });
+          }
+
+          if (result.error) throw result.error;
+
+          resetPageForm();
+          setManagerMessage(wasEditing ? "Facebook Page berhasil diperbarui." : "Facebook Page berhasil ditambahkan.", "success");
+          await loadPages();
+        } catch (error) {
+          console.error("Save Facebook Page error:", error);
+          setManagerMessage(`Gagal menyimpan data: ${error.message || "Kesalahan tidak diketahui"}`, "error");
+        } finally {
+          savePageButton.disabled = false;
+          savePageButton.textContent = editingPageId ? "Simpan Perubahan" : "Simpan";
+        }
       });
 
       verifyAdmin();
