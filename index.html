@@ -313,25 +313,6 @@
         window.location.replace("./dashboard.html");
       }
 
-      async function verifyAdminAccess(userId) {
-        const { data, error } = await supabaseClient
-          .from("admin_users")
-          .select("user_id")
-          .eq("user_id", userId)
-          .maybeSingle();
-
-        if (error) {
-          console.error("Admin verification error:", error);
-          throw new Error("Gagal memverifikasi hak akses administrator.");
-        }
-
-        if (!data || data.user_id !== userId) {
-          throw new Error("Akun ini tidak memiliki akses administrator.");
-        }
-
-        return true;
-      }
-
       togglePassword.addEventListener("click", () => {
         const isPassword = passwordInput.type === "password";
 
@@ -368,11 +349,8 @@
             throw new Error("User tidak ditemukan.");
           }
 
-          await verifyAdminAccess(data.user.id);
-
-          showMessage("Login berhasil. Mengalihkan ke dashboard...", "success");
           passwordInput.value = "";
-
+          loginButton.textContent = "Membuka dashboard...";
           goToDashboard();
 
         } catch (error) {
@@ -417,9 +395,7 @@
           }
 
           setLoading(true);
-          showMessage("Memeriksa sesi administrator...", "success");
-
-          await verifyAdminAccess(data.session.user.id);
+          loginButton.textContent = "Membuka dashboard...";
           goToDashboard();
 
         } catch (error) {
