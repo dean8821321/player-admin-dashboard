@@ -237,6 +237,14 @@
       box-shadow: 0 0 9px #35d28b;
     }
 
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     .welcome-card {
       padding: 27px;
       margin-bottom: 27px;
@@ -563,11 +571,15 @@
           </p>
         </div>
 
-        <div class="status">
-          <span class="status-dot"></span>
-          System Online
+        <div class="topbar-actions">
+          <button type="button" class="primary-button" id="publishConfigButton">↑ Publish Config</button>
+          <div class="status">
+            <span class="status-dot"></span>
+            System Online
+          </div>
         </div>
       </header>
+      <p class="manager-message" id="publishConfigMessage" role="status" aria-live="polite"></p>
 
       <section class="welcome-card">
         <h2>Welcome to Player Admin 👋</h2>
@@ -806,6 +818,8 @@
       const adminEmail = document.getElementById("adminEmail");
       const adminAvatar = document.getElementById("adminAvatar");
       const logoutButton = document.getElementById("logoutButton");
+      const publishConfigButton = document.getElementById("publishConfigButton");
+      const publishConfigMessage = document.getElementById("publishConfigMessage");
       const overviewView = document.getElementById("overviewView");
       const pageManagerView = document.getElementById("pageManagerView");
       const videoManagerView = document.getElementById("videoManagerView");
@@ -846,6 +860,62 @@
       function setManagerMessage(message, type = "") {
         pageManagerMessage.textContent = message;
         pageManagerMessage.className = `manager-message ${type}`.trim();
+      }
+
+      function setPublishConfigMessage(message, type = "") {
+        publishConfigMessage.textContent = message;
+        publishConfigMessage.className = `manager-message ${type}`.trim();
+      }
+
+      async function publishConfig() {
+        if (!accessGranted) {
+          setPublishConfigMessage("Sesi admin tidak valid. Silakan login kembali.", "error");
+          return;
+        }
+
+        const confirmed = window.confirm(
+          "Terbitkan konfigurasi Page dan Video ke GitHub sekarang? Perubahan akan digunakan oleh player setelah Cloudflare Pages memperbarui config.json."
+        );
+        if (!confirmed) return;
+
+        publishConfigButton.disabled = true;
+        publishConfigButton.textContent = "Publishing...";
+        setPublishConfigMessage("Sedang menerbitkan konfigurasi ke GitHub...");
+
+        try {
+          const { data, error } = await supabaseClient.functions.invoke(
+            "publish-config",
+            { body: { action: "publish" } }
+          );
+
+          if (error) {
+            let detail = error.message || "Edge Function gagal dijalankan.";
+            if (error.context && typeof error.context.json === "function") {
+              try {
+                const responseBody = await error.context.json();
+                if (responseBody && responseBody.error) detail = responseBody.error;
+              } catch (_) {
+                // Gunakan pesan error asli jika respons bukan JSON.
+              }
+            }
+            throw new Error(detail);
+          }
+
+          if (!data || data.ok !== true) {
+            throw new Error(data && data.error ? data.error : "Respons publish tidak valid.");
+          }
+
+          setPublishConfigMessage(
+            `Berhasil publish! Versi ${data.version} • ${data.pageCount} Page • ${data.videoCount} Video (${data.activeVideoCount} aktif). GitHub sudah diperbarui; Cloudflare Pages akan melakukan deployment.`,
+            "success"
+          );
+        } catch (error) {
+          console.error("Publish config error:", error);
+          setPublishConfigMessage(`Gagal publish: ${error.message || "Kesalahan tidak diketahui"}`, "error");
+        } finally {
+          publishConfigButton.disabled = false;
+          publishConfigButton.textContent = "↑ Publish Config";
+        }
       }
 
       function setActiveView(view) {
@@ -1317,6 +1387,8 @@
           redirectToLogin();
         }
       });
+
+      publishConfigButton.addEventListener("click", publishConfig);
 
       logoutButton.addEventListener("click", async () => {
         logoutButton.disabled = true;
