@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -257,7 +256,7 @@
           Sign In
         </button>
 
-        <div id="message" class="message" role="status"></div>
+        <div id="message" class="message" role="status" aria-live="polite"></div>
       </form>
     </section>
 
@@ -296,6 +295,8 @@
       const togglePassword = document.getElementById("togglePassword");
       const message = document.getElementById("message");
 
+      let redirecting = false;
+
       function showMessage(text, type) {
         message.textContent = text;
         message.className = "message " + type;
@@ -304,6 +305,31 @@
       function setLoading(loading) {
         loginButton.disabled = loading;
         loginButton.textContent = loading ? "Signing in..." : "Sign In";
+      }
+
+      function goToDashboard() {
+        if (redirecting) return;
+        redirecting = true;
+        window.location.replace("./dashboard.html");
+      }
+
+      async function verifyAdminAccess(userId) {
+        const { data, error } = await supabaseClient
+          .from("admin_users")
+          .select("user_id")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Admin verification error:", error);
+          throw new Error("Gagal memverifikasi hak akses administrator.");
+        }
+
+        if (!data || data.user_id !== userId) {
+          throw new Error("Akun ini tidak memiliki akses administrator.");
+        }
+
+        return true;
       }
 
       togglePassword.addEventListener("click", () => {
@@ -342,15 +368,17 @@
             throw new Error("User tidak ditemukan.");
           }
 
-          showMessage(
-            "Login berhasil. Autentikasi Supabase aktif. Dashboard sedang dalam tahap pembangunan.",
-            "success"
-          );
+          await verifyAdminAccess(data.user.id);
 
+          showMessage("Login berhasil. Mengalihkan ke dashboard...", "success");
           passwordInput.value = "";
+
+          goToDashboard();
 
         } catch (error) {
           console.error("Login error:", error);
+
+          await supabaseClient.auth.signOut();
 
           let errorText = "Login gagal. Silakan periksa email dan password.";
 
@@ -359,14 +387,50 @@
             error.message.toLowerCase().includes("email not confirmed")
           ) {
             errorText = "Email belum dikonfirmasi. Periksa pengaturan akun.";
+          } else if (
+            error.message &&
+            error.message.toLowerCase().includes("tidak memiliki akses")
+          ) {
+            errorText = error.message;
+          } else if (
+            error.message &&
+            error.message.toLowerCase().includes("memverifikasi")
+          ) {
+            errorText = error.message;
           }
 
           showMessage(errorText, "error");
-
-        } finally {
           setLoading(false);
         }
       });
+
+      async function checkExistingSession() {
+        try {
+          const { data, error } = await supabaseClient.auth.getSession();
+
+          if (error) {
+            throw error;
+          }
+
+          if (!data.session || !data.session.user) {
+            return;
+          }
+
+          setLoading(true);
+          showMessage("Memeriksa sesi administrator...", "success");
+
+          await verifyAdminAccess(data.session.user.id);
+          goToDashboard();
+
+        } catch (error) {
+          console.error("Existing session check error:", error);
+          await supabaseClient.auth.signOut();
+          message.className = "message";
+          setLoading(false);
+        }
+      }
+
+      checkExistingSession();
 
     })();
   </script>
