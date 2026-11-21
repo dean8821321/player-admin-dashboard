@@ -396,6 +396,27 @@
     .action-button { padding: 7px 10px; background: #18232e; border-color: #344454; color: #dce5ee; }
     .action-button.delete { color: #f18b9b; border-color: #49313a; background: #21171c; }
     .action-button:hover { filter: brightness(1.2); }
+    .video-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .video-field-full { grid-column: 1 / -1; }
+    .video-select {
+      width: 100%; min-height: 41px; padding: 10px 12px;
+      border: 1px solid #344454; border-radius: 8px;
+      outline: none; background: #0b1219; color: #f1f5f9;
+      font: inherit; font-size: 13px;
+    }
+    .video-select:focus { border-color: #35d28b; box-shadow: 0 0 0 3px rgba(53,210,139,.12); }
+    .video-help { margin-top: 7px; color: #78899a; font-size: 11px; line-height: 1.5; }
+    .video-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+    .video-table th, .video-table td { padding: 13px 11px; border-bottom: 1px solid #25313d; text-align: left; font-size: 12px; }
+    .video-table th { color: #8292a3; font-weight: 600; white-space: nowrap; }
+    .video-table td { color: #dce5ee; }
+    .video-id-cell { font-family: Consolas, monospace; color: #8fe0b7 !important; }
+    .video-url-cell { max-width: 260px; overflow-wrap: anywhere; color: #9ba9b8 !important; }
+
 
 
     @media (max-width: 900px) {
@@ -452,6 +473,8 @@
       .modules-grid {
         grid-template-columns: 1fr;
       }
+      .video-form-grid { grid-template-columns: 1fr; }
+      .video-field-full { grid-column: auto; }
     }
   </style>
 </head>
@@ -489,10 +512,10 @@
         Page Manager
       </a>
 
-      <div class="nav-item">
+      <a href="#video-manager" class="nav-item" data-view="video-manager">
         <span class="nav-icon">▶</span>
         Video Manager
-      </div>
+      </a>
 
       <div class="nav-item">
         <span class="nav-icon">▤</span>
@@ -676,6 +699,78 @@
         </div>
       </section>
 
+      <section class="view-section" id="videoManagerView" hidden>
+        <header class="topbar">
+          <div>
+            <h1 class="page-title">Video Manager</h1>
+            <p class="page-description">Kelola video ID, URL CDN Videy, dan Facebook Page.</p>
+          </div>
+          <div class="status"><span class="status-dot"></span> Video Management</div>
+        </header>
+
+        <div class="manager-toolbar">
+          <div>
+            <h2 class="section-title" style="margin-bottom:5px">Daftar Video</h2>
+            <p class="page-description" style="margin-top:0">URL CDN disimpan permanen saat video ditambahkan atau diperbarui.</p>
+          </div>
+          <button type="button" class="primary-button" id="addVideoButton">＋ Add Video</button>
+        </div>
+
+        <div class="form-card" id="videoFormCard" hidden>
+          <h2 id="videoFormTitle">Tambah Video</h2>
+          <form id="videoForm" autocomplete="off">
+            <div class="video-form-grid">
+              <div>
+                <label class="field-label" for="videoIdInput">Video ID</label>
+                <input class="text-input" id="videoIdInput" name="video_id" type="text" maxlength="100" placeholder="Contoh: jzvGRGGb1" required>
+              </div>
+              <div>
+                <label class="field-label" for="videoTitleInput">Judul Video</label>
+                <input class="text-input" id="videoTitleInput" name="title" type="text" maxlength="160" placeholder="Contoh: Video Test 01" required>
+              </div>
+              <div class="video-field-full">
+                <label class="field-label" for="videoUrlInput">URL Video CDN (opsional)</label>
+                <input class="text-input" id="videoUrlInput" name="video_url" type="url" placeholder="Kosongkan untuk memilih CDN secara acak berdasarkan Video ID">
+                <p class="video-help">Jika URL dikosongkan, sistem memilih salah satu CDN Videy saat disimpan. Jika diisi, hanya URL HTTPS dari cdn.videy.co atau cdn2.videy.co dengan file .mp4 yang diterima.</p>
+              </div>
+              <div class="video-field-full">
+                <label class="field-label" for="videoPageSelect">Facebook Page</label>
+                <select class="video-select" id="videoPageSelect" name="page_id">
+                  <option value="">Tanpa Facebook Page</option>
+                </select>
+              </div>
+              <div class="video-field-full form-actions">
+                <button type="submit" class="primary-button" id="saveVideoButton">Simpan</button>
+                <button type="button" class="secondary-button" id="cancelVideoButton">Batal</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <p class="manager-message" id="videoManagerMessage" role="status" aria-live="polite"></p>
+
+        <div class="table-card">
+          <div class="table-wrap">
+            <table class="video-table">
+              <thead>
+                <tr>
+                  <th>Video ID</th>
+                  <th>Title</th>
+                  <th>Facebook Page</th>
+                  <th>CDN URL</th>
+                  <th>Status</th>
+                  <th>Created At</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="videosTableBody">
+                <tr><td colspan="7" class="empty-row">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <footer class="footer">
         © 2026 Player Admin Dashboard
       </footer>
@@ -713,7 +808,9 @@
       const logoutButton = document.getElementById("logoutButton");
       const overviewView = document.getElementById("overviewView");
       const pageManagerView = document.getElementById("pageManagerView");
+      const videoManagerView = document.getElementById("videoManagerView");
       const pageManagerLink = document.querySelector('[data-view="page-manager"]');
+      const videoManagerLink = document.querySelector('[data-view="video-manager"]');
       const overviewLink = document.querySelector('a[href="#overview"]');
       const addPageButton = document.getElementById("addPageButton");
       const pageFormCard = document.getElementById("pageFormCard");
@@ -725,8 +822,22 @@
       const pagesTableBody = document.getElementById("pagesTableBody");
       const pageManagerMessage = document.getElementById("pageManagerMessage");
       const totalPagesValue = document.getElementById("totalPagesValue");
+      const totalVideosValue = document.getElementById("totalVideosValue");
+      const addVideoButton = document.getElementById("addVideoButton");
+      const videoFormCard = document.getElementById("videoFormCard");
+      const videoForm = document.getElementById("videoForm");
+      const videoFormTitle = document.getElementById("videoFormTitle");
+      const videoIdInput = document.getElementById("videoIdInput");
+      const videoTitleInput = document.getElementById("videoTitleInput");
+      const videoUrlInput = document.getElementById("videoUrlInput");
+      const videoPageSelect = document.getElementById("videoPageSelect");
+      const saveVideoButton = document.getElementById("saveVideoButton");
+      const cancelVideoButton = document.getElementById("cancelVideoButton");
+      const videosTableBody = document.getElementById("videosTableBody");
+      const videoManagerMessage = document.getElementById("videoManagerMessage");
 
       let editingPageId = null;
+      let editingVideoId = null;
       let pagesLoaded = false;
 
       let verificationInProgress = false;
@@ -739,11 +850,15 @@
 
       function setActiveView(view) {
         const showPages = view === "page-manager";
-        overviewView.hidden = showPages;
+        const showVideos = view === "video-manager";
+        overviewView.hidden = showPages || showVideos;
         pageManagerView.hidden = !showPages;
-        overviewLink.classList.toggle("active", !showPages);
+        videoManagerView.hidden = !showVideos;
+        overviewLink.classList.toggle("active", view === "overview");
         pageManagerLink.classList.toggle("active", showPages);
+        videoManagerLink.classList.toggle("active", showVideos);
         if (showPages) loadPages();
+        if (showVideos) loadVideos();
       }
 
       function resetPageForm() {
@@ -891,6 +1006,206 @@
         await loadPages();
       }
 
+      function setVideoManagerMessage(message, type = "") {
+        videoManagerMessage.textContent = message;
+        videoManagerMessage.className = `manager-message ${type}`.trim();
+      }
+
+      function resetVideoForm() {
+        editingVideoId = null;
+        videoForm.reset();
+        videoFormTitle.textContent = "Tambah Video";
+        saveVideoButton.textContent = "Simpan";
+        videoFormCard.hidden = true;
+      }
+
+      function buildVideyUrl(videoId) {
+        const providers = ["https://cdn.videy.co/", "https://cdn2.videy.co/"];
+        const selectedProvider = providers[Math.floor(Math.random() * providers.length)];
+        return `${selectedProvider}${encodeURIComponent(videoId)}.mp4`;
+      }
+
+      function validateVideoUrl(value, videoId) {
+        const trimmed = value.trim();
+        if (!trimmed) return buildVideyUrl(videoId);
+
+        let parsed;
+        try {
+          parsed = new URL(trimmed);
+        } catch {
+          throw new Error("URL video tidak valid.");
+        }
+
+        const allowedHosts = ["cdn.videy.co", "cdn2.videy.co"];
+        if (parsed.protocol !== "https:" || !allowedHosts.includes(parsed.hostname.toLowerCase())) {
+          throw new Error("URL harus menggunakan HTTPS dari cdn.videy.co atau cdn2.videy.co.");
+        }
+        if (!parsed.pathname.toLowerCase().endsWith(".mp4")) {
+          throw new Error("URL video harus mengarah ke file .mp4.");
+        }
+        return parsed.href;
+      }
+
+      async function loadVideoPageOptions(selectedPageId = "") {
+        const { data, error } = await supabaseClient
+          .from("facebook_pages")
+          .select("id, page_name")
+          .eq("is_active", true)
+          .order("page_name", { ascending: true });
+
+        if (error) throw error;
+
+        videoPageSelect.replaceChildren();
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = "Tanpa Facebook Page";
+        videoPageSelect.appendChild(defaultOption);
+
+        (data || []).forEach((page) => {
+          const option = document.createElement("option");
+          option.value = page.id;
+          option.textContent = page.page_name;
+          videoPageSelect.appendChild(option);
+        });
+
+        if (selectedPageId && !Array.from(videoPageSelect.options).some((option) => option.value === selectedPageId)) {
+          const unavailableOption = document.createElement("option");
+          unavailableOption.value = selectedPageId;
+          unavailableOption.textContent = "Facebook Page tidak aktif / tidak tersedia";
+          videoPageSelect.appendChild(unavailableOption);
+        }
+        videoPageSelect.value = selectedPageId || "";
+      }
+
+      function renderVideos(videos) {
+        videosTableBody.replaceChildren();
+        totalVideosValue.textContent = String(videos.length);
+
+        if (!videos.length) {
+          const row = document.createElement("tr");
+          const cell = createCell("Belum ada video. Klik Add Video untuk menambahkan.", "empty-row");
+          cell.colSpan = 7;
+          row.appendChild(cell);
+          videosTableBody.appendChild(row);
+          return;
+        }
+
+        videos.forEach((video) => {
+          const row = document.createElement("tr");
+          row.appendChild(createCell(video.video_id, "video-id-cell"));
+          row.appendChild(createCell(video.title));
+          row.appendChild(createCell(video.facebook_pages?.page_name || "—"));
+          row.appendChild(createCell(video.video_url, "video-url-cell"));
+
+          const statusCell = document.createElement("td");
+          const status = document.createElement("span");
+          status.className = `page-status ${video.is_active ? "on" : "off"}`;
+          status.textContent = video.is_active ? "ON" : "OFF";
+          statusCell.appendChild(status);
+          row.appendChild(statusCell);
+
+          row.appendChild(createCell(formatCreatedAt(video.created_at)));
+
+          const actionCell = document.createElement("td");
+          const actions = document.createElement("div");
+          actions.className = "row-actions";
+
+          const toggleButton = document.createElement("button");
+          toggleButton.type = "button";
+          toggleButton.className = "action-button";
+          toggleButton.textContent = video.is_active ? "Matikan" : "Aktifkan";
+          toggleButton.addEventListener("click", () => toggleVideoStatus(video));
+
+          const editButton = document.createElement("button");
+          editButton.type = "button";
+          editButton.className = "action-button";
+          editButton.textContent = "Edit";
+          editButton.addEventListener("click", () => openVideoEditForm(video));
+
+          const deleteButton = document.createElement("button");
+          deleteButton.type = "button";
+          deleteButton.className = "action-button delete";
+          deleteButton.textContent = "Delete";
+          deleteButton.addEventListener("click", () => deleteVideo(video));
+
+          actions.append(toggleButton, editButton, deleteButton);
+          actionCell.appendChild(actions);
+          row.appendChild(actionCell);
+          videosTableBody.appendChild(row);
+        });
+      }
+
+      async function loadVideos() {
+        if (!accessGranted) return;
+        videosTableBody.innerHTML = '<tr><td colspan="7" class="empty-row">Memuat data...</td></tr>';
+        setVideoManagerMessage("");
+
+        const { data, error } = await supabaseClient
+          .from("videos")
+          .select("id, video_id, title, video_url, page_id, is_active, created_at, facebook_pages(page_name)")
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Load videos error:", error);
+          videosTableBody.innerHTML = '<tr><td colspan="7" class="empty-row">Gagal memuat data. Periksa tabel videos dan kebijakan akses Supabase.</td></tr>';
+          setVideoManagerMessage(error.message, "error");
+          return;
+        }
+
+        renderVideos(data || []);
+      }
+
+      async function openVideoEditForm(video) {
+        editingVideoId = video.id;
+        videoIdInput.value = video.video_id;
+        videoTitleInput.value = video.title;
+        videoUrlInput.value = video.video_url;
+        videoFormTitle.textContent = "Edit Video";
+        saveVideoButton.textContent = "Simpan Perubahan";
+        try {
+          await loadVideoPageOptions(video.page_id);
+          videoFormCard.hidden = false;
+          videoIdInput.focus();
+        } catch (error) {
+          setVideoManagerMessage(`Gagal memuat Facebook Page: ${error.message}`, "error");
+        }
+      }
+
+      async function toggleVideoStatus(video) {
+        const { error } = await supabaseClient
+          .from("videos")
+          .update({ is_active: !video.is_active })
+          .eq("id", video.id);
+
+        if (error) {
+          console.error("Update video status error:", error);
+          setVideoManagerMessage(`Gagal mengubah status: ${error.message}`, "error");
+          return;
+        }
+
+        setVideoManagerMessage("Status video berhasil diperbarui.", "success");
+        await loadVideos();
+      }
+
+      async function deleteVideo(video) {
+        const confirmed = window.confirm(`Hapus video "${video.video_id}"? Tindakan ini tidak dapat dibatalkan.`);
+        if (!confirmed) return;
+
+        const { error } = await supabaseClient
+          .from("videos")
+          .delete()
+          .eq("id", video.id);
+
+        if (error) {
+          console.error("Delete video error:", error);
+          setVideoManagerMessage(`Gagal menghapus video: ${error.message}`, "error");
+          return;
+        }
+
+        setVideoManagerMessage("Video berhasil dihapus.", "success");
+        await loadVideos();
+      }
+
       function redirectToLogin() {
         window.location.replace("./index.html");
       }
@@ -987,10 +1302,104 @@
         window.history.replaceState(null, "", "#page-manager");
       });
 
+      videoManagerLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        setActiveView("video-manager");
+        window.history.replaceState(null, "", "#video-manager");
+      });
+
       overviewLink.addEventListener("click", (event) => {
         event.preventDefault();
         setActiveView("overview");
         window.history.replaceState(null, "", "#overview");
+      });
+
+      addVideoButton.addEventListener("click", async () => {
+        editingVideoId = null;
+        videoForm.reset();
+        videoFormTitle.textContent = "Tambah Video";
+        saveVideoButton.textContent = "Simpan";
+        setVideoManagerMessage("");
+        try {
+          await loadVideoPageOptions();
+          videoFormCard.hidden = false;
+          videoIdInput.focus();
+        } catch (error) {
+          setVideoManagerMessage(`Gagal memuat Facebook Page: ${error.message}`, "error");
+        }
+      });
+
+      cancelVideoButton.addEventListener("click", resetVideoForm);
+
+      videoForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const videoId = videoIdInput.value.trim();
+        const title = videoTitleInput.value.trim();
+        const pageId = videoPageSelect.value || null;
+
+        if (!videoId || !title) {
+          setVideoManagerMessage("Video ID dan judul wajib diisi.", "error");
+          return;
+        }
+
+        saveVideoButton.disabled = true;
+        saveVideoButton.textContent = "Menyimpan...";
+        setVideoManagerMessage("");
+
+        try {
+          const videoUrl = validateVideoUrl(videoUrlInput.value, videoId);
+
+          const duplicateQuery = await supabaseClient
+            .from("videos")
+            .select("id, video_id")
+            .ilike("video_id", videoId);
+
+          if (duplicateQuery.error) throw duplicateQuery.error;
+
+          const duplicate = (duplicateQuery.data || []).some((item) => item.id !== editingVideoId);
+          if (duplicate) throw new Error("Video ID tersebut sudah terdaftar.");
+
+          const wasEditing = Boolean(editingVideoId);
+          let result;
+
+          if (editingVideoId) {
+            result = await supabaseClient
+              .from("videos")
+              .update({
+                video_id: videoId,
+                title,
+                video_url: videoUrl,
+                page_id: pageId
+              })
+              .eq("id", editingVideoId);
+          } else {
+            result = await supabaseClient
+              .from("videos")
+              .insert({
+                video_id: videoId,
+                title,
+                video_url: videoUrl,
+                page_id: pageId,
+                is_active: true
+              });
+          }
+
+          if (result.error) throw result.error;
+
+          resetVideoForm();
+          setVideoManagerMessage(
+            wasEditing ? "Video berhasil diperbarui." : "Video berhasil ditambahkan.",
+            "success"
+          );
+          await loadVideos();
+        } catch (error) {
+          console.error("Save video error:", error);
+          setVideoManagerMessage(`Gagal menyimpan video: ${error.message || "Kesalahan tidak diketahui"}`, "error");
+        } finally {
+          saveVideoButton.disabled = false;
+          saveVideoButton.textContent = editingVideoId ? "Simpan Perubahan" : "Simpan";
+        }
       });
 
       addPageButton.addEventListener("click", () => {
