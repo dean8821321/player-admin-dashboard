@@ -424,6 +424,11 @@
     .video-table td { color: #dce5ee; }
     .video-id-cell { font-family: Consolas, monospace; color: #8fe0b7 !important; }
     .video-url-cell { max-width: 260px; overflow-wrap: anywhere; color: #9ba9b8 !important; }
+    .player-url-cell { min-width: 260px; }
+    .player-url-link { display: block; max-width: 290px; margin-bottom: 7px; color: #8fc7ff; overflow-wrap: anywhere; text-decoration: none; }
+    .player-url-link:hover { text-decoration: underline; }
+    .player-url-actions { display: flex; gap: 6px; }
+    .player-url-actions .action-button { padding: 5px 8px; font-size: 11px; }
 
 
 
@@ -770,13 +775,14 @@
                   <th>Title</th>
                   <th>Facebook Page</th>
                   <th>CDN URL</th>
+                  <th>Player URL</th>
                   <th>Status</th>
                   <th>Created At</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody id="videosTableBody">
-                <tr><td colspan="7" class="empty-row">Memuat data...</td></tr>
+                <tr><td colspan="8" class="empty-row">Memuat data...</td></tr>
               </tbody>
             </table>
           </div>
@@ -1193,7 +1199,7 @@
         if (!videos.length) {
           const row = document.createElement("tr");
           const cell = createCell("Belum ada video. Klik Add Video untuk menambahkan.", "empty-row");
-          cell.colSpan = 7;
+          cell.colSpan = 8;
           row.appendChild(cell);
           videosTableBody.appendChild(row);
           return;
@@ -1205,6 +1211,46 @@
           row.appendChild(createCell(video.title));
           row.appendChild(createCell(video.facebook_pages?.page_name || "—"));
           row.appendChild(createCell(video.video_url, "video-url-cell"));
+
+          const playerUrl = `https://player-website.pages.dev/?mov=${encodeURIComponent(video.video_id)}`;
+          const playerUrlCell = document.createElement("td");
+          playerUrlCell.className = "player-url-cell";
+
+          const playerUrlLink = document.createElement("a");
+          playerUrlLink.className = "player-url-link";
+          playerUrlLink.href = playerUrl;
+          playerUrlLink.target = "_blank";
+          playerUrlLink.rel = "noopener noreferrer";
+          playerUrlLink.textContent = playerUrl;
+
+          const playerUrlActions = document.createElement("div");
+          playerUrlActions.className = "player-url-actions";
+
+          const copyPlayerUrlButton = document.createElement("button");
+          copyPlayerUrlButton.type = "button";
+          copyPlayerUrlButton.className = "action-button";
+          copyPlayerUrlButton.textContent = "Copy URL";
+          copyPlayerUrlButton.addEventListener("click", async () => {
+            try {
+              await navigator.clipboard.writeText(playerUrl);
+              setVideoManagerMessage(`Player URL untuk ${video.video_id} berhasil disalin.`, "success");
+            } catch (error) {
+              console.error("Copy Player URL error:", error);
+              setVideoManagerMessage("Browser menolak akses clipboard. Salin URL dari tautan yang tampil.", "error");
+            }
+          });
+
+          const openPlayerUrlButton = document.createElement("button");
+          openPlayerUrlButton.type = "button";
+          openPlayerUrlButton.className = "action-button";
+          openPlayerUrlButton.textContent = "Open";
+          openPlayerUrlButton.addEventListener("click", () => {
+            window.open(playerUrl, "_blank", "noopener,noreferrer");
+          });
+
+          playerUrlActions.append(copyPlayerUrlButton, openPlayerUrlButton);
+          playerUrlCell.append(playerUrlLink, playerUrlActions);
+          row.appendChild(playerUrlCell);
 
           const statusCell = document.createElement("td");
           const status = document.createElement("span");
@@ -1246,7 +1292,7 @@
 
       async function loadVideos() {
         if (!accessGranted) return;
-        videosTableBody.innerHTML = '<tr><td colspan="7" class="empty-row">Memuat data...</td></tr>';
+        videosTableBody.innerHTML = '<tr><td colspan="8" class="empty-row">Memuat data...</td></tr>';
         setVideoManagerMessage("");
 
         const { data, error } = await supabaseClient
@@ -1256,7 +1302,7 @@
 
         if (error) {
           console.error("Load videos error:", error);
-          videosTableBody.innerHTML = '<tr><td colspan="7" class="empty-row">Gagal memuat data. Periksa tabel videos dan kebijakan akses Supabase.</td></tr>';
+          videosTableBody.innerHTML = '<tr><td colspan="8" class="empty-row">Gagal memuat data. Periksa tabel videos dan kebijakan akses Supabase.</td></tr>';
           setVideoManagerMessage(error.message, "error");
           return;
         }
