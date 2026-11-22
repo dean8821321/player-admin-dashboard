@@ -905,6 +905,7 @@
       const logoutButton = document.getElementById("logoutButton");
       const publishConfigButton = document.getElementById("publishConfigButton");
       const publishConfigMessage = document.getElementById("publishConfigMessage");
+      const overviewPublishMessage = document.getElementById("overviewPublishMessage");
       const overviewView = document.getElementById("overviewView");
       const pageManagerView = document.getElementById("pageManagerView");
       const videoManagerView = document.getElementById("videoManagerView");
@@ -965,8 +966,12 @@
       }
 
       function setPublishConfigMessage(message, type = "") {
-        publishConfigMessage.textContent = message;
-        publishConfigMessage.className = `manager-message ${type}`.trim();
+        // Tombol Publish Config berada di Overview, sedangkan elemen
+        // publishConfigMessage berada di dalam Video Manager. Tulis ke
+        // elemen yang sedang terlihat agar pesan tidak hilang.
+        const target = overviewView.hidden ? publishConfigMessage : overviewPublishMessage;
+        target.textContent = message;
+        target.className = `manager-message ${type}`.trim();
       }
 
       async function publishConfig() {
