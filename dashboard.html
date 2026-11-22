@@ -326,6 +326,7 @@
     .settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 18px; }
     .settings-grid-small { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
     .settings-panel { min-width: 0; padding: 18px; border: 1px solid #293847; border-radius: 10px; background: #0d151e; }
+    .settings-panel-wide { grid-column: 1 / -1; }
     .settings-panel h3 { margin: 0 0 15px; font-size: 14px; }
     .settings-panel .field-label, #histatsForm .field-label { margin-top: 14px; }
     .setting-toggle { display: flex; align-items: center; gap: 9px; margin: 10px 0 15px; color: #dce5ee; font-size: 13px; }
@@ -762,14 +763,16 @@
         <header class="topbar">
           <div>
             <h1 class="page-title">Ads Manager</h1>
-            <p class="page-description">Atur iklan global, posisi atas, dan posisi bawah player.</p>
+            <p class="page-description">Iklan untuk halaman LP dan untuk player diatur terpisah.</p>
           </div>
           <div class="status"><span class="status-dot"></span> Ad Settings</div>
         </header>
-        <p class="manager-message" id="adsMessage" role="status" aria-live="polite"></p>
-        <form class="form-card" id="adsForm" autocomplete="off">
-          <h2>Pengaturan Iklan Global</h2>
-          <label class="setting-toggle"><input id="adsEnabled" type="checkbox"> Aktifkan iklan di seluruh player</label>
+
+        <form class="form-card" id="adsPlayerForm" autocomplete="off">
+          <h2>Iklan Player</h2>
+          <p class="video-help">Tampil di dalam tab player, di atas dan di bawah video.</p>
+          <p class="manager-message" id="adsMessage" role="status" aria-live="polite"></p>
+          <label class="setting-toggle"><input id="adsEnabled" type="checkbox"> Aktifkan iklan di player</label>
           <div class="settings-grid">
             <section class="settings-panel">
               <h3>Iklan Atas (Top)</h3>
@@ -798,7 +801,34 @@
               </div>
             </section>
           </div>
-          <div class="form-actions settings-actions"><button class="primary-button" id="saveAdsButton" type="submit">Simpan &amp; Publish Ads</button><button class="secondary-button" id="reloadAdsButton" type="button">Muat Ulang</button></div>
+          <div class="form-actions settings-actions"><button class="primary-button" id="saveAdsButton" type="submit">Simpan &amp; Publish Iklan Player</button><button class="secondary-button" id="reloadAdsButton" type="button">Muat Ulang</button></div>
+        </form>
+
+        <form class="form-card" id="adsLpForm" autocomplete="off">
+          <h2>Iklan LP</h2>
+          <p class="video-help">Tampil di halaman pembuka sebelum pengunjung masuk ke video.</p>
+          <p class="manager-message" id="lpAdsMessage" role="status" aria-live="polite"></p>
+          <label class="setting-toggle"><input id="lpAdEnabled" type="checkbox"> Aktifkan iklan di halaman LP</label>
+          <div class="settings-grid">
+            <section class="settings-panel settings-panel-wide">
+              <label class="field-label" for="lpAdPosition">Posisi Iklan</label>
+              <select class="video-select" id="lpAdPosition">
+                <option value="top">Atas kartu video</option>
+                <option value="bottom">Bawah kartu video</option>
+                <option value="both">Atas dan bawah</option>
+              </select>
+              <label class="field-label" for="lpAdKey">Ad Key</label>
+              <input class="text-input" id="lpAdKey" type="text" maxlength="200" placeholder="Masukkan key iklan LP">
+              <label class="field-label" for="lpAdScript">Script URL</label>
+              <input class="text-input" id="lpAdScript" type="url" maxlength="1000" placeholder="https://domain-iklan.com/script.js">
+              <div class="settings-grid settings-grid-small">
+                <div><label class="field-label" for="lpAdFormat">Format</label><select class="video-select" id="lpAdFormat"><option value="iframe">Iframe</option><option value="script">Script</option></select></div>
+                <div><label class="field-label" for="lpAdWidth">Width</label><input class="text-input" id="lpAdWidth" type="number" min="1" max="2000" value="320"></div>
+                <div><label class="field-label" for="lpAdHeight">Height</label><input class="text-input" id="lpAdHeight" type="number" min="1" max="2000" value="50"></div>
+              </div>
+            </section>
+          </div>
+          <div class="form-actions settings-actions"><button class="primary-button" id="saveLpAdsButton" type="submit">Simpan &amp; Publish Iklan LP</button><button class="secondary-button" id="reloadLpAdsButton" type="button">Muat Ulang</button></div>
         </form>
       </section>
 
@@ -900,11 +930,14 @@
       const publishedPlayerUrl = document.getElementById("publishedPlayerUrl");
       const copyPublishedUrlButton = document.getElementById("copyPublishedUrlButton");
       const openPublishedUrlButton = document.getElementById("openPublishedUrlButton");
-      const adsForm = document.getElementById("adsForm");
+      const adsForm = document.getElementById("adsPlayerForm");
+      const adsLpForm = document.getElementById("adsLpForm");
       const histatsForm = document.getElementById("histatsForm");
       const adsMessage = document.getElementById("adsMessage");
+      const lpAdsMessage = document.getElementById("lpAdsMessage");
       const histatsMessage = document.getElementById("histatsMessage");
       const saveAdsButton = document.getElementById("saveAdsButton");
+      const saveLpAdsButton = document.getElementById("saveLpAdsButton");
       const saveHistatsButton = document.getElementById("saveHistatsButton");
       const CENTRAL_CONFIG_URL = "https://player-central-config.pages.dev/config.json";
 
@@ -1040,8 +1073,39 @@
         return config;
       }
 
+      function applyAdSlotToForm(prefix, slot) {
+        const source = slot && typeof slot === "object" ? slot : {};
+        document.getElementById(`${prefix}AdEnabled`).checked = source.enabled === true;
+        setInputValue(`${prefix}AdKey`, source.key);
+        setInputValue(`${prefix}AdScript`, source.scriptUrl);
+        setInputValue(`${prefix}AdFormat`, source.format || "iframe");
+        setInputValue(`${prefix}AdWidth`, Number.isInteger(source.width) ? source.width : prefix === "top" ? 320 : 300);
+        setInputValue(`${prefix}AdHeight`, Number.isInteger(source.height) ? source.height : prefix === "top" ? 50 : 250);
+      }
+
+      function readAdSlotFromForm(prefix, label) {
+        const script = validateHttpsUrl(
+          document.getElementById(`${prefix}AdScript`).value,
+          `Script URL iklan ${label}`,
+          document.getElementById(`${prefix}AdEnabled`).checked
+        );
+        const numberValue = (id, fieldLabel) => {
+          const value = Number(document.getElementById(id).value);
+          if (!Number.isInteger(value) || value < 1 || value > 2000) throw new Error(`${fieldLabel} harus angka 1 sampai 2000.`);
+          return value;
+        };
+        return {
+          enabled: document.getElementById(`${prefix}AdEnabled`).checked,
+          key: document.getElementById(`${prefix}AdKey`).value.trim(),
+          scriptUrl: script,
+          format: document.getElementById(`${prefix}AdFormat`).value,
+          width: numberValue(`${prefix}AdWidth`, `Lebar iklan ${label}`),
+          height: numberValue(`${prefix}AdHeight`, `Tinggi iklan ${label}`)
+        };
+      }
+
       async function loadAdsSettings(forceReload = false) {
-        setSettingsMessage(adsMessage, "Memuat pengaturan iklan...");
+        setSettingsMessage(adsMessage, "Memuat pengaturan iklan player...");
         try {
           const config = await loadCentralConfig(forceReload);
           const ads = config.ads && typeof config.ads === "object" ? config.ads : {};
@@ -1060,9 +1124,28 @@
           setInputValue("bottomAdFormat", bottom.format || "iframe");
           setInputValue("bottomAdWidth", Number.isInteger(bottom.width) ? bottom.width : 300);
           setInputValue("bottomAdHeight", Number.isInteger(bottom.height) ? bottom.height : 250);
-          setSettingsMessage(adsMessage, `Pengaturan berhasil dimuat. Versi config: ${config.version ?? "—"}.`, "success");
+          setSettingsMessage(adsMessage, `Iklan player dimuat. Versi config: ${config.version ?? "—"}.`, "success");
         } catch (error) {
-          setSettingsMessage(adsMessage, `Gagal memuat pengaturan iklan: ${error.message}`, "error");
+          setSettingsMessage(adsMessage, `Gagal memuat iklan player: ${error.message}`, "error");
+        }
+      }
+
+      async function loadLpAdsSettings(forceReload = false) {
+        setSettingsMessage(lpAdsMessage, "Memuat pengaturan iklan LP...");
+        try {
+          const config = await loadCentralConfig(forceReload);
+          const ads = config.ads && typeof config.ads === "object" ? config.ads : {};
+          const lp = ads.lp && typeof ads.lp === "object" ? ads.lp : {};
+          document.getElementById("lpAdEnabled").checked = lp.enabled === true;
+          setInputValue("lpAdPosition", lp.position === "bottom" || lp.position === "both" ? lp.position : "top");
+          setInputValue("lpAdKey", lp.key);
+          setInputValue("lpAdScript", lp.scriptUrl);
+          setInputValue("lpAdFormat", lp.format || "iframe");
+          setInputValue("lpAdWidth", Number.isInteger(lp.width) ? lp.width : 320);
+          setInputValue("lpAdHeight", Number.isInteger(lp.height) ? lp.height : 50);
+          setSettingsMessage(lpAdsMessage, `Iklan LP dimuat. Versi config: ${config.version ?? "—"}.`, "success");
+        } catch (error) {
+          setSettingsMessage(lpAdsMessage, `Gagal memuat iklan LP: ${error.message}`, "error");
         }
       }
 
@@ -1109,38 +1192,31 @@
       async function saveAdsSettings(event) {
         event.preventDefault();
         try {
-          const topScript = validateHttpsUrl(document.getElementById("topAdScript").value, "Script URL iklan atas", document.getElementById("topAdEnabled").checked);
-          const bottomScript = validateHttpsUrl(document.getElementById("bottomAdScript").value, "Script URL iklan bawah", document.getElementById("bottomAdEnabled").checked);
-          const numberValue = (id, label) => {
-            const value = Number(document.getElementById(id).value);
-            if (!Number.isInteger(value) || value < 1 || value > 2000) throw new Error(`${label} harus angka 1 sampai 2000.`);
-            return value;
-          };
           const ads = {
             enabled: document.getElementById("adsEnabled").checked,
-            top: {
-              enabled: document.getElementById("topAdEnabled").checked,
-              key: document.getElementById("topAdKey").value.trim(),
-              scriptUrl: topScript,
-              format: document.getElementById("topAdFormat").value,
-              width: numberValue("topAdWidth", "Lebar iklan atas"),
-              height: numberValue("topAdHeight", "Tinggi iklan atas")
-            },
-            bottom: {
-              enabled: document.getElementById("bottomAdEnabled").checked,
-              key: document.getElementById("bottomAdKey").value.trim(),
-              scriptUrl: bottomScript,
-              format: document.getElementById("bottomAdFormat").value,
-              width: numberValue("bottomAdWidth", "Lebar iklan bawah"),
-              height: numberValue("bottomAdHeight", "Tinggi iklan bawah")
-            }
+            top: readAdSlotFromForm("top", "atas"),
+            bottom: readAdSlotFromForm("bottom", "bawah")
           };
           if (ads.enabled && !ads.top.enabled && !ads.bottom.enabled) {
-            if (!window.confirm("Iklan global aktif, tetapi kedua slot iklan OFF. Simpan kondisi ini?")) return;
+            if (!window.confirm("Iklan player aktif, tetapi kedua slot iklan OFF. Simpan kondisi ini?")) return;
           }
-          await publishSettings({ ads }, saveAdsButton, adsMessage, "Pengaturan Ads");
+          await publishSettings({ ads }, saveAdsButton, adsMessage, "Iklan player");
         } catch (error) {
           setSettingsMessage(adsMessage, error.message, "error");
+        }
+      }
+
+      async function saveLpAdsSettings(event) {
+        event.preventDefault();
+        try {
+          const lp = readAdSlotFromForm("lp", "LP");
+          lp.position = document.getElementById("lpAdPosition").value;
+          if (!["top", "bottom", "both"].includes(lp.position)) {
+            throw new Error("Posisi iklan LP tidak valid.");
+          }
+          await publishSettings({ ads: { lp } }, saveLpAdsButton, lpAdsMessage, "Iklan LP");
+        } catch (error) {
+          setSettingsMessage(lpAdsMessage, error.message, "error");
         }
       }
 
@@ -1177,7 +1253,10 @@
         if (showOverview || showPages) loadPages();
         if (showOverview || showVideos) loadVideos();
         if (showOverview) loadVideoPageOptions().catch((error) => setVideoManagerMessage(`Gagal memuat Facebook Page: ${error.message}`, "error"));
-        if (showAds) loadAdsSettings();
+        if (showAds) {
+          loadAdsSettings();
+          loadLpAdsSettings();
+        }
         if (showHistats) loadHistatsSettings();
       }
 
@@ -1865,8 +1944,10 @@
       });
 
       adsForm.addEventListener("submit", saveAdsSettings);
+      adsLpForm.addEventListener("submit", saveLpAdsSettings);
       histatsForm.addEventListener("submit", saveHistatsSettings);
       document.getElementById("reloadAdsButton").addEventListener("click", () => loadAdsSettings(true));
+      document.getElementById("reloadLpAdsButton").addEventListener("click", () => loadLpAdsSettings(true));
       document.getElementById("reloadHistatsButton").addEventListener("click", () => loadHistatsSettings(true));
 
       addVideoButton.addEventListener("click", () => {
