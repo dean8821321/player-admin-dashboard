@@ -1572,7 +1572,7 @@
           toggleButton.type = "button";
           toggleButton.className = "action-button";
           toggleButton.textContent = video.is_active ? "Matikan" : "Aktifkan";
-          toggleButton.addEventListener("click", () => toggleVideoStatus(video));
+          toggleButton.addEventListener("click", () => toggleVideoStatus(video, toggleButton));
 
           const editButton = document.createElement("button");
           editButton.type = "button";
@@ -1631,58 +1631,75 @@
         }
       }
 
-      async function toggleVideoStatus(video) {
+      async function toggleVideoStatus(video, button) {
+        if (!accessGranted) {
+          setVideoManagerMessage("Sesi admin tidak valid. Silakan login kembali.", "error");
+          return;
+        }
+
+        if (button) button.disabled = true;
+
         const nextStatus = !video.is_active;
         setVideoManagerMessage(
           `Sedang ${nextStatus ? "mengaktifkan" : "menonaktifkan"} video dan memublikasikan konfigurasi...`
         );
 
-        const { error: updateError } = await supabaseClient
-          .from("videos")
-          .update({ is_active: nextStatus })
-          .eq("id", video.id);
-
-        if (updateError) {
-          console.error("Update video status error:", updateError);
-          setVideoManagerMessage(`Gagal mengubah status: ${updateError.message}`, "error");
-          return;
-        }
-
-        let publishMessage = "";
-        let publishMessageType = "success";
-
         try {
-          const { data, error } = await supabaseClient.functions.invoke(
-            "publish-config",
-            { body: { action: "publish" } }
-          );
+          const { error: updateError } = await supabaseClient
+            .from("videos")
+            .update({ is_active: nextStatus })
+            .eq("id", video.id);
 
-          if (error) {
-            let detail = error.message || "Edge Function gagal dijalankan.";
-            if (error.context && typeof error.context.json === "function") {
-              try {
-                const responseBody = await error.context.json();
-                if (responseBody && responseBody.error) detail = responseBody.error;
-              } catch (_) {
-                // Gunakan pesan error asli jika respons bukan JSON.
+          if (updateError) {
+            console.error("Update video status error:", updateError);
+            setVideoManagerMessage(`Gagal mengubah status: ${updateError.message}`, "error");
+            return;
+          }
+
+          let publishMessage = "";
+          let publishMessageType = "success";
+
+          try {
+            const { data, error } = await supabaseClient.functions.invoke(
+              "publish-config",
+              { body: { action: "publish" } }
+            );
+
+            if (error) {
+              let detail = error.message || "Edge Function gagal dijalankan.";
+              if (error.context && typeof error.context.json === "function") {
+                try {
+                  const responseBody = await error.context.json();
+                  if (responseBody && responseBody.error) detail = responseBody.error;
+                } catch (_) {
+                  // Gunakan pesan error asli jika respons bukan JSON.
+                }
               }
+              throw new Error(detail);
             }
-            throw new Error(detail);
+
+            if (!data || data.ok !== true) {
+              throw new Error(data && data.error ? data.error : "Respons publish tidak valid.");
+            }
+
+            publishMessage = `Video berhasil ${nextStatus ? "diaktifkan" : "dinonaktifkan"} dan config berhasil dipublikasikan. Versi ${data.version} • ${data.activeVideoCount} video aktif. Cloudflare Pages akan memperbarui config.json.`;
+          } catch (publishError) {
+            console.error("Publish config after status change error:", publishError);
+            publishMessageType = "error";
+            publishMessage = `Status video sudah berubah di database, tetapi publish config gagal: ${publishError.message || "Kesalahan tidak diketahui"}. Player mungkin masih menggunakan konfigurasi lama. Tekan Publish Config untuk mencoba lagi.`;
           }
 
-          if (!data || data.ok !== true) {
-            throw new Error(data && data.error ? data.error : "Respons publish tidak valid.");
-          }
-
-          publishMessage = `Video berhasil ${nextStatus ? "diaktifkan" : "dinonaktifkan"} dan config berhasil dipublikasikan. Versi ${data.version} • ${data.activeVideoCount} video aktif. Cloudflare Pages akan memperbarui config.json.`;
-        } catch (publishError) {
-          console.error("Publish config after status change error:", publishError);
-          publishMessageType = "error";
-          publishMessage = `Status video sudah berubah di database, tetapi publish config gagal: ${publishError.message || "Kesalahan tidak diketahui"}. Player mungkin masih menggunakan konfigurasi lama. Tekan Publish Config untuk mencoba lagi.`;
+          await loadVideos();
+          setVideoManagerMessage(publishMessage, publishMessageType);
+        } catch (error) {
+          console.error("Toggle video status error:", error);
+          setVideoManagerMessage(
+            `Gagal mengubah status: ${error.message || "Kesalahan tidak diketahui"}`,
+            "error"
+          );
+        } finally {
+          if (button) button.disabled = false;
         }
-
-        await loadVideos();
-        setVideoManagerMessage(publishMessage, publishMessageType);
       }
 
       async function deleteVideo(video) {
