@@ -7,102 +7,124 @@
  * di dalam <div class="ad-slot">. Script ini membaca window.atOptions lalu
  * menggambar kotak iklan berukuran sesuai konfigurasi.
  *
+ * format "iframe" -> dirender sebagai <iframe> (terisolasi dari CSS halaman)
+ * format "script" -> dirender sebagai <div> biasa
+ *
  * File ini hanya untuk pengujian. Jangan dipakai untuk iklan sungguhan.
  */
 (function () {
   "use strict";
 
-  var options = window.atOptions && typeof window.atOptions === "object"
-    ? window.atOptions
-    : {};
+  var options =
+    window.atOptions && typeof window.atOptions === "object"
+      ? window.atOptions
+      : {};
 
-  var toPositiveInt = function (value, fallback) {
+  function toPositiveInt(value, fallback) {
     var parsed = parseInt(value, 10);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-  };
+  }
 
   var width = toPositiveInt(options.width, 300);
   var height = toPositiveInt(options.height, 250);
   var format = typeof options.format === "string" ? options.format : "iframe";
-  var key = typeof options.key === "string" && options.key.trim()
-    ? options.key.trim()
-    : "(key kosong)";
+  var key =
+    typeof options.key === "string" && options.key.trim()
+      ? options.key.trim()
+      : "(key kosong)";
 
-  function createBox() {
-    var box = document.createElement("div");
-    box.setAttribute("data-ad-demo", "true");
-    box.style.boxSizing = "border-box";
-    box.style.display = "flex";
-    box.style.flexDirection = "column";
-    box.style.alignItems = "center";
-    box.style.justifyContent = "center";
-    box.style.gap = "6px";
-    box.style.width = "100%";
-    box.style.maxWidth = width + "px";
-    box.style.height = height + "px";
-    box.style.margin = "0 auto";
-    box.style.padding = "10px";
-    box.style.border = "2px dashed #35d28b";
-    box.style.borderRadius = "10px";
-    box.style.background =
-      "repeating-linear-gradient(45deg, #10251b, #10251b 10px, #0d1f17 10px, #0d1f17 20px)";
-    box.style.color = "#7ef0b6";
-    box.style.fontFamily = "system-ui, -apple-system, Segoe UI, sans-serif";
-    box.style.textAlign = "center";
-    box.style.overflow = "hidden";
-
+  function buildMarkup() {
     var compact = height < 90;
+    var large = height >= 200;
+    var titleSize = compact ? 12 : Math.max(13, Math.min(24, Math.round(height / 12)));
 
-    var title = document.createElement("div");
-    title.textContent = compact
-      ? "IKLAN DEMO " + width + " \u00d7 " + height
-      : "IKLAN DEMO";
-    title.style.fontSize = compact
-      ? "12px"
-      : Math.max(13, Math.min(22, Math.round(height / 12))) + "px";
-    title.style.fontWeight = "800";
-    title.style.letterSpacing = compact ? "0.5px" : "1px";
-    title.style.whiteSpace = "nowrap";
+    var lines = [
+      '<div style="font-size:' + titleSize + 'px;font-weight:800;' +
+        'letter-spacing:' + (compact ? "0.5px" : "1px") + ';white-space:nowrap">' +
+        "IKLAN DEMO" + (compact ? " " + width + " \u00d7 " + height : "") +
+        "</div>",
+    ];
 
-    box.appendChild(title);
+    if (!compact) {
+      lines.push(
+        '<div style="font-size:12px;color:#9fb8ad">' + width + " \u00d7 " + height + " px</div>"
+      );
+      lines.push(
+        '<div style="font-size:11px;color:#7d9188">format: ' + escapeHtml(format) + "</div>"
+      );
+      if (large) {
+        lines.push(
+          '<div style="font-size:11px;color:#7d9188;max-width:100%;word-break:break-all">key: ' +
+            escapeHtml(key) +
+            "</div>"
+        );
+      }
+    }
 
-    if (compact) return box;
+    return (
+      '<!doctype html><html><head><meta charset="utf-8">' +
+      '<style>html,body{margin:0;height:100%;overflow:hidden;}' +
+      "body{display:flex;flex-direction:column;align-items:center;justify-content:center;" +
+      "gap:6px;box-sizing:border-box;padding:6px;text-align:center;" +
+      "font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#7ef0b6;" +
+      "border:2px dashed #35d28b;border-radius:10px;" +
+      "background:repeating-linear-gradient(45deg,#10251b,#10251b 10px,#0d1f17 10px,#0d1f17 20px);" +
+      "}</style></head><body>" +
+      lines.join("") +
+      "</body></html>"
+    );
+  }
 
-    var size = document.createElement("div");
-    size.textContent = width + " × " + height + " px";
-    size.style.fontSize = "12px";
-    size.style.color = "#9fb8ad";
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
 
-    var meta = document.createElement("div");
-    meta.textContent = "format: " + format;
-    meta.style.fontSize = "11px";
-    meta.style.color = "#7d9188";
+  function createNode() {
+    var markup = buildMarkup();
+    var node;
 
-    var keyLine = document.createElement("div");
-    keyLine.textContent = "key: " + key;
-    keyLine.style.fontSize = "11px";
-    keyLine.style.color = "#7d9188";
-    keyLine.style.wordBreak = "break-all";
-    keyLine.style.maxWidth = "100%";
+    if (format === "iframe") {
+      node = document.createElement("iframe");
+      node.title = "Iklan demo";
+      node.setAttribute("data-ad-demo", "true");
+      node.setAttribute("scrolling", "no");
+      node.setAttribute("frameborder", "0");
+      node.srcdoc = markup;
+    } else {
+      node = document.createElement("div");
+      node.setAttribute("data-ad-demo", "true");
+      node.innerHTML = markup
+        .replace(/^[\s\S]*?<body>/, "")
+        .replace(/<\/body>[\s\S]*$/, "");
+    }
 
-    box.appendChild(size);
-    box.appendChild(meta);
-    box.appendChild(keyLine);
+    node.style.boxSizing = "border-box";
+    node.style.display = "block";
+    node.style.width = width + "px";
+    node.style.maxWidth = "100%";
+    node.style.height = height + "px";
+    node.style.margin = "0 auto";
+    node.style.border = "0";
+    node.style.overflow = "hidden";
 
-    return box;
+    return node;
   }
 
   function mount() {
-    var box = createBox();
+    var node = createNode();
     var script = document.currentScript;
 
     if (script && script.parentNode) {
-      script.parentNode.insertBefore(box, script.nextSibling);
+      script.parentNode.insertBefore(node, script.nextSibling);
       return;
     }
 
     var slot = document.querySelector(".ad-slot");
-    (slot || document.body).appendChild(box);
+    (slot || document.body).appendChild(node);
   }
 
   mount();
