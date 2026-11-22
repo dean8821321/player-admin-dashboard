@@ -344,6 +344,15 @@
     }
 
     .view-section[hidden] { display: none !important; }
+    .settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 18px; }
+    .settings-grid-small { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .settings-panel { min-width: 0; padding: 18px; border: 1px solid #293847; border-radius: 10px; background: #0d151e; }
+    .settings-panel h3 { margin: 0 0 15px; font-size: 14px; }
+    .settings-panel .field-label, #histatsForm .field-label { margin-top: 14px; }
+    .setting-toggle { display: flex; align-items: center; gap: 9px; margin: 10px 0 15px; color: #dce5ee; font-size: 13px; }
+    .setting-toggle input { width: 16px; height: 16px; accent-color: #1d9b63; }
+    .settings-actions { margin-top: 20px; flex-wrap: wrap; }
+    @media (max-width: 650px) { .settings-grid, .settings-grid-small { grid-template-columns: 1fr; } }
 
     .manager-toolbar {
       display: flex;
@@ -579,6 +588,14 @@
         <span class="nav-icon">⚙</span>
         Facebook Pages
       </a>
+      <a href="#ads-manager" class="nav-item" data-view="ads-manager">
+        <span class="nav-icon">▤</span>
+        Ads Manager
+      </a>
+      <a href="#histats-settings" class="nav-item" data-view="histats-settings">
+        <span class="nav-icon">◉</span>
+        Histats Settings
+      </a>
 
       <div class="sidebar-bottom">
 
@@ -786,6 +803,71 @@
         </div>
       </section>
 
+      <section class="view-section" id="adsManagerView" hidden>
+        <header class="topbar">
+          <div>
+            <h1 class="page-title">Ads Manager</h1>
+            <p class="page-description">Atur iklan global, posisi atas, dan posisi bawah player.</p>
+          </div>
+          <div class="status"><span class="status-dot"></span> Ad Settings</div>
+        </header>
+        <p class="manager-message" id="adsMessage" role="status" aria-live="polite"></p>
+        <form class="form-card" id="adsForm" autocomplete="off">
+          <h2>Pengaturan Iklan Global</h2>
+          <label class="setting-toggle"><input id="adsEnabled" type="checkbox"> Aktifkan iklan di seluruh player</label>
+          <div class="settings-grid">
+            <section class="settings-panel">
+              <h3>Iklan Atas (Top)</h3>
+              <label class="setting-toggle"><input id="topAdEnabled" type="checkbox"> Aktifkan iklan atas</label>
+              <label class="field-label" for="topAdKey">Ad Key</label>
+              <input class="text-input" id="topAdKey" type="text" maxlength="200" placeholder="Masukkan key iklan">
+              <label class="field-label" for="topAdScript">Script URL</label>
+              <input class="text-input" id="topAdScript" type="url" maxlength="1000" placeholder="https://domain-iklan.com/script.js">
+              <div class="settings-grid settings-grid-small">
+                <div><label class="field-label" for="topAdFormat">Format</label><select class="video-select" id="topAdFormat"><option value="iframe">Iframe</option><option value="script">Script</option></select></div>
+                <div><label class="field-label" for="topAdWidth">Width</label><input class="text-input" id="topAdWidth" type="number" min="1" max="2000" value="320"></div>
+                <div><label class="field-label" for="topAdHeight">Height</label><input class="text-input" id="topAdHeight" type="number" min="1" max="2000" value="50"></div>
+              </div>
+            </section>
+            <section class="settings-panel">
+              <h3>Iklan Bawah (Bottom)</h3>
+              <label class="setting-toggle"><input id="bottomAdEnabled" type="checkbox"> Aktifkan iklan bawah</label>
+              <label class="field-label" for="bottomAdKey">Ad Key</label>
+              <input class="text-input" id="bottomAdKey" type="text" maxlength="200" placeholder="Masukkan key iklan">
+              <label class="field-label" for="bottomAdScript">Script URL</label>
+              <input class="text-input" id="bottomAdScript" type="url" maxlength="1000" placeholder="https://domain-iklan.com/script.js">
+              <div class="settings-grid settings-grid-small">
+                <div><label class="field-label" for="bottomAdFormat">Format</label><select class="video-select" id="bottomAdFormat"><option value="iframe">Iframe</option><option value="script">Script</option></select></div>
+                <div><label class="field-label" for="bottomAdWidth">Width</label><input class="text-input" id="bottomAdWidth" type="number" min="1" max="2000" value="300"></div>
+                <div><label class="field-label" for="bottomAdHeight">Height</label><input class="text-input" id="bottomAdHeight" type="number" min="1" max="2000" value="250"></div>
+              </div>
+            </section>
+          </div>
+          <div class="form-actions settings-actions"><button class="primary-button" id="saveAdsButton" type="submit">Simpan &amp; Publish Ads</button><button class="secondary-button" id="reloadAdsButton" type="button">Muat Ulang</button></div>
+        </form>
+      </section>
+
+      <section class="view-section" id="histatsSettingsView" hidden>
+        <header class="topbar">
+          <div>
+            <h1 class="page-title">Histats Settings</h1>
+            <p class="page-description">Atur kode tracking Histats untuk seluruh player.</p>
+          </div>
+          <div class="status"><span class="status-dot"></span> Analytics</div>
+        </header>
+        <p class="manager-message" id="histatsMessage" role="status" aria-live="polite"></p>
+        <form class="form-card" id="histatsForm" autocomplete="off">
+          <h2>Konfigurasi Histats</h2>
+          <label class="setting-toggle"><input id="histatsEnabled" type="checkbox"> Aktifkan Histats di seluruh player</label>
+          <label class="field-label" for="histatsSiteId">Histats Site ID</label>
+          <input class="text-input" id="histatsSiteId" type="text" maxlength="100" placeholder="Contoh: 1,5020708,4,0,0,0,00010000">
+          <label class="field-label" for="histatsScriptUrl">Histats Script URL</label>
+          <input class="text-input" id="histatsScriptUrl" type="url" maxlength="1000" placeholder="https://s10.histats.com/js15_as.js">
+          <p class="video-help">Gunakan Site ID dan URL script resmi dari akun Histats. URL wajib menggunakan HTTPS.</p>
+          <div class="form-actions settings-actions"><button class="primary-button" id="saveHistatsButton" type="submit">Simpan &amp; Publish Histats</button><button class="secondary-button" id="reloadHistatsButton" type="button">Muat Ulang</button></div>
+        </form>
+      </section>
+
       <footer class="footer">
         © 2026 Player Admin Dashboard
       </footer>
@@ -826,6 +908,10 @@
       const overviewView = document.getElementById("overviewView");
       const pageManagerView = document.getElementById("pageManagerView");
       const videoManagerView = document.getElementById("videoManagerView");
+      const adsManagerView = document.getElementById("adsManagerView");
+      const histatsSettingsView = document.getElementById("histatsSettingsView");
+      const adsManagerLink = document.querySelector('[data-view="ads-manager"]');
+      const histatsSettingsLink = document.querySelector('[data-view="histats-settings"]');
       const pageManagerLink = document.querySelector('[data-view="page-manager"]');
       const videoManagerLink = document.querySelector('[data-view="video-manager"]');
       const overviewLink = document.querySelector('[data-view="overview"]');
@@ -857,7 +943,15 @@
       const publishedPlayerUrl = document.getElementById("publishedPlayerUrl");
       const copyPublishedUrlButton = document.getElementById("copyPublishedUrlButton");
       const openPublishedUrlButton = document.getElementById("openPublishedUrlButton");
+      const adsForm = document.getElementById("adsForm");
+      const histatsForm = document.getElementById("histatsForm");
+      const adsMessage = document.getElementById("adsMessage");
+      const histatsMessage = document.getElementById("histatsMessage");
+      const saveAdsButton = document.getElementById("saveAdsButton");
+      const saveHistatsButton = document.getElementById("saveHistatsButton");
+      const CENTRAL_CONFIG_URL = "https://player-central-config.pages.dev/config.json";
 
+      let centralConfigCache = null;
       let editingPageId = null;
       let editingVideoId = null;
       let pagesLoaded = false;
@@ -965,19 +1059,180 @@
         }
       }
 
+      function setSettingsMessage(element, message, type = "") {
+        element.textContent = message;
+        element.className = `manager-message ${type}`.trim();
+      }
+
+      function setInputValue(id, value) {
+        const element = document.getElementById(id);
+        if (element) element.value = value == null ? "" : String(value);
+      }
+
+      async function loadCentralConfig(forceReload = false) {
+        if (centralConfigCache && !forceReload) return centralConfigCache;
+        const response = await fetch(`${CENTRAL_CONFIG_URL}?_=${Date.now()}`, {
+          method: "GET",
+          cache: "no-store",
+          headers: { "Accept": "application/json" }
+        });
+        if (!response.ok) throw new Error(`Gagal mengambil config.json (HTTP ${response.status}).`);
+        const config = await response.json();
+        if (!config || typeof config !== "object") throw new Error("Format config.json tidak valid.");
+        centralConfigCache = config;
+        return config;
+      }
+
+      async function loadAdsSettings(forceReload = false) {
+        setSettingsMessage(adsMessage, "Memuat pengaturan iklan...");
+        try {
+          const config = await loadCentralConfig(forceReload);
+          const ads = config.ads && typeof config.ads === "object" ? config.ads : {};
+          const top = ads.top && typeof ads.top === "object" ? ads.top : {};
+          const bottom = ads.bottom && typeof ads.bottom === "object" ? ads.bottom : {};
+          document.getElementById("adsEnabled").checked = ads.enabled === true;
+          document.getElementById("topAdEnabled").checked = top.enabled === true;
+          setInputValue("topAdKey", top.key);
+          setInputValue("topAdScript", top.scriptUrl);
+          setInputValue("topAdFormat", top.format || "iframe");
+          setInputValue("topAdWidth", Number.isInteger(top.width) ? top.width : 320);
+          setInputValue("topAdHeight", Number.isInteger(top.height) ? top.height : 50);
+          document.getElementById("bottomAdEnabled").checked = bottom.enabled === true;
+          setInputValue("bottomAdKey", bottom.key);
+          setInputValue("bottomAdScript", bottom.scriptUrl);
+          setInputValue("bottomAdFormat", bottom.format || "iframe");
+          setInputValue("bottomAdWidth", Number.isInteger(bottom.width) ? bottom.width : 300);
+          setInputValue("bottomAdHeight", Number.isInteger(bottom.height) ? bottom.height : 250);
+          setSettingsMessage(adsMessage, `Pengaturan berhasil dimuat. Versi config: ${config.version ?? "—"}.`, "success");
+        } catch (error) {
+          setSettingsMessage(adsMessage, `Gagal memuat pengaturan iklan: ${error.message}`, "error");
+        }
+      }
+
+      async function loadHistatsSettings(forceReload = false) {
+        setSettingsMessage(histatsMessage, "Memuat pengaturan Histats...");
+        try {
+          const config = await loadCentralConfig(forceReload);
+          const histats = config.histats && typeof config.histats === "object" ? config.histats : {};
+          document.getElementById("histatsEnabled").checked = histats.enabled === true;
+          setInputValue("histatsSiteId", histats.siteId);
+          setInputValue("histatsScriptUrl", histats.scriptUrl);
+          setSettingsMessage(histatsMessage, `Pengaturan berhasil dimuat. Versi config: ${config.version ?? "—"}.`, "success");
+        } catch (error) {
+          setSettingsMessage(histatsMessage, `Gagal memuat pengaturan Histats: ${error.message}`, "error");
+        }
+      }
+
+      function validateHttpsUrl(value, label, required) {
+        const trimmed = value.trim();
+        if (!trimmed && !required) return "";
+        let parsed;
+        try { parsed = new URL(trimmed); } catch (_) { throw new Error(`${label} harus berupa URL HTTPS yang valid.`); }
+        if (parsed.protocol !== "https:") throw new Error(`${label} wajib menggunakan HTTPS.`);
+        return parsed.href;
+      }
+
+      async function publishSettings(payload, button, messageElement, successLabel) {
+        if (!accessGranted) throw new Error("Sesi admin tidak valid. Silakan login kembali.");
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = "Publishing...";
+        setSettingsMessage(messageElement, "Menyimpan pengaturan dan menerbitkan config...");
+        try {
+          const { data, error } = await supabaseClient.functions.invoke("publish-config", {
+            body: { action: "publish", ...payload }
+          });
+          if (error) {
+            let detail = error.message || "Edge Function gagal dijalankan.";
+            if (error.context && typeof error.context.json === "function") {
+              try { const body = await error.context.json(); if (body?.error) detail = body.error; } catch (_) {}
+            }
+            throw new Error(detail);
+          }
+          if (!data || data.ok !== true) throw new Error(data?.error || "Respons publish tidak valid.");
+          centralConfigCache = null;
+          setSettingsMessage(messageElement, `${successLabel} berhasil disimpan dan dipublikasikan. Config versi ${data.version}. Cloudflare Pages akan memperbarui file config.json.`, "success");
+        } catch (error) {
+          setSettingsMessage(messageElement, `Gagal menyimpan ${successLabel.toLowerCase()}: ${error.message}`, "error");
+        } finally {
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      }
+
+      async function saveAdsSettings(event) {
+        event.preventDefault();
+        try {
+          const topScript = validateHttpsUrl(document.getElementById("topAdScript").value, "Script URL iklan atas", document.getElementById("topAdEnabled").checked);
+          const bottomScript = validateHttpsUrl(document.getElementById("bottomAdScript").value, "Script URL iklan bawah", document.getElementById("bottomAdEnabled").checked);
+          const numberValue = (id, label) => {
+            const value = Number(document.getElementById(id).value);
+            if (!Number.isInteger(value) || value < 1 || value > 2000) throw new Error(`${label} harus angka 1 sampai 2000.`);
+            return value;
+          };
+          const ads = {
+            enabled: document.getElementById("adsEnabled").checked,
+            top: {
+              enabled: document.getElementById("topAdEnabled").checked,
+              key: document.getElementById("topAdKey").value.trim(),
+              scriptUrl: topScript,
+              format: document.getElementById("topAdFormat").value,
+              width: numberValue("topAdWidth", "Lebar iklan atas"),
+              height: numberValue("topAdHeight", "Tinggi iklan atas")
+            },
+            bottom: {
+              enabled: document.getElementById("bottomAdEnabled").checked,
+              key: document.getElementById("bottomAdKey").value.trim(),
+              scriptUrl: bottomScript,
+              format: document.getElementById("bottomAdFormat").value,
+              width: numberValue("bottomAdWidth", "Lebar iklan bawah"),
+              height: numberValue("bottomAdHeight", "Tinggi iklan bawah")
+            }
+          };
+          if (ads.enabled && !ads.top.enabled && !ads.bottom.enabled) {
+            if (!window.confirm("Iklan global aktif, tetapi kedua slot iklan OFF. Simpan kondisi ini?")) return;
+          }
+          await publishSettings({ ads }, saveAdsButton, adsMessage, "Pengaturan Ads");
+        } catch (error) {
+          setSettingsMessage(adsMessage, error.message, "error");
+        }
+      }
+
+      async function saveHistatsSettings(event) {
+        event.preventDefault();
+        try {
+          const enabled = document.getElementById("histatsEnabled").checked;
+          const siteId = document.getElementById("histatsSiteId").value.trim();
+          const scriptUrl = validateHttpsUrl(document.getElementById("histatsScriptUrl").value, "Histats Script URL", enabled);
+          if (enabled && !siteId) throw new Error("Histats Site ID wajib diisi saat Histats diaktifkan.");
+          const histats = { enabled, siteId, scriptUrl };
+          await publishSettings({ histats }, saveHistatsButton, histatsMessage, "Pengaturan Histats");
+        } catch (error) {
+          setSettingsMessage(histatsMessage, error.message, "error");
+        }
+      }
+
       function setActiveView(view) {
         const showOverview = view === "overview";
         const showPages = view === "page-manager";
         const showVideos = view === "video-manager";
+        const showAds = view === "ads-manager";
+        const showHistats = view === "histats-settings";
         overviewView.hidden = !showOverview;
         pageManagerView.hidden = !showPages;
         videoManagerView.hidden = !showVideos;
+        adsManagerView.hidden = !showAds;
+        histatsSettingsView.hidden = !showHistats;
         overviewLink.classList.toggle("active", showOverview);
         pageManagerLink.classList.toggle("active", showPages);
         videoManagerLink.classList.toggle("active", showVideos);
+        adsManagerLink.classList.toggle("active", showAds);
+        histatsSettingsLink.classList.toggle("active", showHistats);
         if (showOverview || showPages) loadPages();
         if (showOverview || showVideos) loadVideos();
         if (showOverview) loadVideoPageOptions().catch((error) => setVideoManagerMessage(`Gagal memuat Facebook Page: ${error.message}`, "error"));
+        if (showAds) loadAdsSettings();
+        if (showHistats) loadHistatsSettings();
       }
 
       function resetPageForm() {
@@ -1534,6 +1789,23 @@
         setActiveView("video-manager");
         window.history.replaceState(null, "", "#video-manager");
       });
+
+      adsManagerLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        setActiveView("ads-manager");
+        window.history.replaceState(null, "", "#ads-manager");
+      });
+
+      histatsSettingsLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        setActiveView("histats-settings");
+        window.history.replaceState(null, "", "#histats-settings");
+      });
+
+      adsForm.addEventListener("submit", saveAdsSettings);
+      histatsForm.addEventListener("submit", saveHistatsSettings);
+      document.getElementById("reloadAdsButton").addEventListener("click", () => loadAdsSettings(true));
+      document.getElementById("reloadHistatsButton").addEventListener("click", () => loadHistatsSettings(true));
 
       addVideoButton.addEventListener("click", () => {
         setActiveView("overview");
