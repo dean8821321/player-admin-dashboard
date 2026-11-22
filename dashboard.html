@@ -771,6 +771,7 @@
           </div>
           <div class="status"><span class="status-dot"></span> Ready</div>
         </header>
+        <p class="manager-message" id="videoManagerViewMessage" role="status" aria-live="polite"></p>
 
         <div class="manager-toolbar">
           <div>
@@ -940,6 +941,7 @@
       const cancelVideoButton = document.getElementById("cancelVideoButton");
       const videosTableBody = document.getElementById("videosTableBody");
       const videoManagerMessage = document.getElementById("videoManagerMessage");
+      const videoManagerViewMessage = document.getElementById("videoManagerViewMessage");
       const publishedUrlCard = document.getElementById("publishedUrlCard");
       const publishedPlayerUrl = document.getElementById("publishedPlayerUrl");
       const copyPublishedUrlButton = document.getElementById("copyPublishedUrlButton");
@@ -972,6 +974,38 @@
         const target = overviewView.hidden ? publishConfigMessage : overviewPublishMessage;
         target.textContent = message;
         target.className = `manager-message ${type}`.trim();
+      }
+
+      async function publishConfigNow(payload = {}) {
+        if (!accessGranted) {
+          throw new Error("Sesi admin tidak valid. Silakan login kembali.");
+        }
+
+        const { data, error } = await supabaseClient.functions.invoke(
+          "publish-config",
+          { body: { action: "publish", ...payload } }
+        );
+
+        if (error) {
+          let detail = error.message || "Edge Function gagal dijalankan.";
+          if (error.context && typeof error.context.json === "function") {
+            try {
+              const responseBody = await error.context.json();
+              if (responseBody && responseBody.error) detail = responseBody.error;
+            } catch (_) {
+              // Gunakan pesan error asli jika respons bukan JSON.
+            }
+          }
+          throw new Error(detail);
+        }
+
+        if (!data || data.ok !== true) {
+          throw new Error(data && data.error ? data.error : "Respons publish tidak valid.");
+        }
+
+        // Config di CDN sudah berubah, cache lokal harus dibuang.
+        centralConfigCache = null;
+        return data;
       }
 
       async function publishConfig() {
@@ -1012,6 +1046,8 @@
             throw new Error(data && data.error ? data.error : "Respons publish tidak valid.");
           }
 
+          centralConfigCache = null;
+
           setPublishConfigMessage(
             `Berhasil publish! Versi ${data.version} • ${data.pageCount} Page • ${data.videoCount} Video (${data.activeVideoCount} aktif). GitHub sudah diperbarui; Cloudflare Pages akan melakukan deployment.`,
             "success"
@@ -1046,6 +1082,7 @@
           if (!data || data.ok !== true) {
             throw new Error(data && data.error ? data.error : "Respons publish tidak valid.");
           }
+          centralConfigCache = null;
           const playerUrl = `https://player-website.pages.dev/?mov=${encodeURIComponent(videoId)}`;
           publishedPlayerUrl.value = playerUrl;
           publishedUrlCard.hidden = false;
@@ -1240,6 +1277,30 @@
         if (showHistats) loadHistatsSettings();
       }
 
+      const VIEW_NAMES = [
+        "overview",
+        "video-manager",
+        "page-manager",
+        "ads-manager",
+        "histats-settings"
+      ];
+
+      function viewFromHash() {
+        const hash = String(window.location.hash || "").replace(/^#/, "");
+        return VIEW_NAMES.includes(hash) ? hash : null;
+      }
+
+      function navigateTo(view, push = true) {
+        setActiveView(view);
+        const target = `#${view}`;
+        if (window.location.hash === target) return;
+        if (push) {
+          window.history.pushState(null, "", target);
+        } else {
+          window.history.replaceState(null, "", target);
+        }
+      }
+
       function resetPageForm() {
         editingPageId = null;
         pageForm.reset();
@@ -1362,8 +1423,19 @@
           return;
         }
 
-        setManagerMessage("Status Page berhasil diperbarui.", "success");
+        let publishSuffix = "";
+        let publishType = "success";
+        try {
+          const data = await publishConfigNow();
+          publishSuffix = ` dan config dipublikasikan (versi ${data.version})`;
+        } catch (publishError) {
+          console.error("Publish config after page status error:", publishError);
+          publishType = "error";
+          publishSuffix = `, tetapi publish config gagal: ${publishError.message || "Kesalahan tidak diketahui"}. Tekan Publish Config untuk mencoba lagi`;
+        }
+
         await loadPages();
+        setManagerMessage(`Status Page berhasil diperbarui${publishSuffix}.`, publishType);
       }
 
       async function deletePage(page) {
@@ -1381,13 +1453,27 @@
           return;
         }
 
-        setManagerMessage("Facebook Page berhasil dihapus.", "success");
+        let publishSuffix = "";
+        let publishType = "success";
+        try {
+          const data = await publishConfigNow();
+          publishSuffix = ` Config berhasil dipublikasikan (versi ${data.version}).`;
+        } catch (publishError) {
+          console.error("Publish config after page delete error:", publishError);
+          publishType = "error";
+          publishSuffix = ` Namun publish config gagal: ${publishError.message || "Kesalahan tidak diketahui"}. Tekan Publish Config di Overview untuk mencoba lagi.`;
+        }
+
         await loadPages();
+        setManagerMessage(`Facebook Page berhasil dihapus.${publishSuffix}`, publishType);
       }
 
       function setVideoManagerMessage(message, type = "") {
-        videoManagerMessage.textContent = message;
-        videoManagerMessage.className = `manager-message ${type}`.trim();
+        // videoManagerMessage berada di Overview (dipakai form video),
+        // sedangkan videoManagerViewMessage berada di halaman Video Manager.
+        const target = videoManagerView.hidden ? videoManagerMessage : videoManagerViewMessage;
+        target.textContent = message;
+        target.className = `manager-message ${type}`.trim();
       }
 
       function resetVideoForm() {
@@ -1614,8 +1700,7 @@
       }
 
       async function openVideoEditForm(video) {
-        setActiveView("overview");
-        window.history.replaceState(null, "", "#overview");
+        navigateTo("overview");
         editingVideoId = video.id;
         videoIdInput.value = video.video_id;
         videoTitleInput.value = video.title;
@@ -1682,6 +1767,8 @@
               throw new Error(data && data.error ? data.error : "Respons publish tidak valid.");
             }
 
+            centralConfigCache = null;
+
             publishMessage = `Video berhasil ${nextStatus ? "diaktifkan" : "dinonaktifkan"} dan config berhasil dipublikasikan. Versi ${data.version} • ${data.activeVideoCount} video aktif. Cloudflare Pages akan memperbarui config.json.`;
           } catch (publishError) {
             console.error("Publish config after status change error:", publishError);
@@ -1717,8 +1804,19 @@
           return;
         }
 
-        setVideoManagerMessage("Video berhasil dihapus.", "success");
+        let publishSuffix = "";
+        let publishType = "success";
+        try {
+          const data = await publishConfigNow();
+          publishSuffix = ` Config berhasil dipublikasikan (versi ${data.version}).`;
+        } catch (publishError) {
+          console.error("Publish config after video delete error:", publishError);
+          publishType = "error";
+          publishSuffix = ` Namun publish config gagal: ${publishError.message || "Kesalahan tidak diketahui"}. Tekan Publish Config untuk mencoba lagi.`;
+        }
+
         await loadVideos();
+        setVideoManagerMessage(`Video berhasil dihapus.${publishSuffix}`, publishType);
       }
 
       function redirectToLogin() {
@@ -1778,7 +1876,7 @@
           accessGranted = true;
           loadingScreen.style.display = "none";
           app.style.display = "block";
-          setActiveView("overview");
+          navigateTo(viewFromHash() || "overview", false);
 
         } catch (error) {
           console.error("Dashboard verification error:", error);
@@ -1834,32 +1932,32 @@
 
       overviewLink.addEventListener("click", (event) => {
         event.preventDefault();
-        setActiveView("overview");
-        window.history.replaceState(null, "", "#overview");
+        navigateTo("overview");
       });
 
       pageManagerLink.addEventListener("click", (event) => {
         event.preventDefault();
-        setActiveView("page-manager");
-        window.history.replaceState(null, "", "#page-manager");
+        navigateTo("page-manager");
       });
 
       videoManagerLink.addEventListener("click", (event) => {
         event.preventDefault();
-        setActiveView("video-manager");
-        window.history.replaceState(null, "", "#video-manager");
+        navigateTo("video-manager");
       });
 
       adsManagerLink.addEventListener("click", (event) => {
         event.preventDefault();
-        setActiveView("ads-manager");
-        window.history.replaceState(null, "", "#ads-manager");
+        navigateTo("ads-manager");
       });
 
       histatsSettingsLink.addEventListener("click", (event) => {
         event.preventDefault();
-        setActiveView("histats-settings");
-        window.history.replaceState(null, "", "#histats-settings");
+        navigateTo("histats-settings");
+      });
+
+      window.addEventListener("hashchange", () => {
+        if (!accessGranted) return;
+        navigateTo(viewFromHash() || "overview", false);
       });
 
       adsForm.addEventListener("submit", saveAdsSettings);
@@ -1868,8 +1966,7 @@
       document.getElementById("reloadHistatsButton").addEventListener("click", () => loadHistatsSettings(true));
 
       addVideoButton.addEventListener("click", () => {
-        setActiveView("overview");
-        window.history.replaceState(null, "", "#overview");
+        navigateTo("overview");
         videoIdInput.focus();
       });
 
@@ -1991,8 +2088,22 @@
           if (result.error) throw result.error;
 
           resetPageForm();
-          setManagerMessage(wasEditing ? "Facebook Page berhasil diperbarui." : "Facebook Page berhasil ditambahkan.", "success");
+          const successMessage = wasEditing ? "Facebook Page berhasil diperbarui." : "Facebook Page berhasil ditambahkan.";
           await loadPages();
+          setManagerMessage(`${successMessage} Menerbitkan config...`);
+          try {
+            const data = await publishConfigNow();
+            setManagerMessage(
+              `${successMessage} Config berhasil dipublikasikan (versi ${data.version}). Cloudflare Pages akan memperbarui config.json.`,
+              "success"
+            );
+          } catch (publishError) {
+            console.error("Publish config after page save error:", publishError);
+            setManagerMessage(
+              `${successMessage} Namun publish config gagal: ${publishError.message || "Kesalahan tidak diketahui"}. Tekan Publish Config di Overview untuk mencoba lagi.`,
+              "error"
+            );
+          }
         } catch (error) {
           console.error("Save Facebook Page error:", error);
           setManagerMessage(`Gagal menyimpan data: ${error.message || "Kesalahan tidak diketahui"}`, "error");
