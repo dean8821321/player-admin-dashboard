@@ -763,7 +763,7 @@
         </div>
       </section>
 
-      <section class="view-section" id="videoManagerView">
+      <section class="view-section" id="videoManagerView" hidden>
         <header class="topbar">
           <div>
             <h1 class="page-title">Video Manager</h1>
@@ -1024,29 +1024,7 @@
         setPublishConfigMessage("Sedang menerbitkan konfigurasi ke GitHub...");
 
         try {
-          const { data, error } = await supabaseClient.functions.invoke(
-            "publish-config",
-            { body: { action: "publish" } }
-          );
-
-          if (error) {
-            let detail = error.message || "Edge Function gagal dijalankan.";
-            if (error.context && typeof error.context.json === "function") {
-              try {
-                const responseBody = await error.context.json();
-                if (responseBody && responseBody.error) detail = responseBody.error;
-              } catch (_) {
-                // Gunakan pesan error asli jika respons bukan JSON.
-              }
-            }
-            throw new Error(detail);
-          }
-
-          if (!data || data.ok !== true) {
-            throw new Error(data && data.error ? data.error : "Respons publish tidak valid.");
-          }
-
-          centralConfigCache = null;
+          const data = await publishConfigNow();
 
           setPublishConfigMessage(
             `Berhasil publish! Versi ${data.version} • ${data.pageCount} Page • ${data.videoCount} Video (${data.activeVideoCount} aktif). GitHub sudah diperbarui; Cloudflare Pages akan melakukan deployment.`,
@@ -1065,24 +1043,7 @@
         setPublishConfigMessage("Video tersimpan. Sedang otomatis memublikasikan config...", "");
         saveVideoButton.disabled = true;
         try {
-          const { data, error } = await supabaseClient.functions.invoke(
-            "publish-config",
-            { body: { action: "publish" } }
-          );
-          if (error) {
-            let detail = error.message || "Edge Function gagal dijalankan.";
-            if (error.context && typeof error.context.json === "function") {
-              try {
-                const responseBody = await error.context.json();
-                if (responseBody && responseBody.error) detail = responseBody.error;
-              } catch (_) {}
-            }
-            throw new Error(detail);
-          }
-          if (!data || data.ok !== true) {
-            throw new Error(data && data.error ? data.error : "Respons publish tidak valid.");
-          }
-          centralConfigCache = null;
+          const data = await publishConfigNow();
           const playerUrl = `https://player-website.pages.dev/?mov=${encodeURIComponent(videoId)}`;
           publishedPlayerUrl.value = playerUrl;
           publishedUrlCard.hidden = false;
@@ -1181,18 +1142,7 @@
         button.textContent = "Publishing...";
         setSettingsMessage(messageElement, "Menyimpan pengaturan dan menerbitkan config...");
         try {
-          const { data, error } = await supabaseClient.functions.invoke("publish-config", {
-            body: { action: "publish", ...payload }
-          });
-          if (error) {
-            let detail = error.message || "Edge Function gagal dijalankan.";
-            if (error.context && typeof error.context.json === "function") {
-              try { const body = await error.context.json(); if (body?.error) detail = body.error; } catch (_) {}
-            }
-            throw new Error(detail);
-          }
-          if (!data || data.ok !== true) throw new Error(data?.error || "Respons publish tidak valid.");
-          centralConfigCache = null;
+          const data = await publishConfigNow(payload);
           setSettingsMessage(messageElement, `${successLabel} berhasil disimpan dan dipublikasikan. Config versi ${data.version}. Cloudflare Pages akan memperbarui file config.json.`, "success");
         } catch (error) {
           setSettingsMessage(messageElement, `Gagal menyimpan ${successLabel.toLowerCase()}: ${error.message}`, "error");
@@ -1745,29 +1695,7 @@
           let publishMessageType = "success";
 
           try {
-            const { data, error } = await supabaseClient.functions.invoke(
-              "publish-config",
-              { body: { action: "publish" } }
-            );
-
-            if (error) {
-              let detail = error.message || "Edge Function gagal dijalankan.";
-              if (error.context && typeof error.context.json === "function") {
-                try {
-                  const responseBody = await error.context.json();
-                  if (responseBody && responseBody.error) detail = responseBody.error;
-                } catch (_) {
-                  // Gunakan pesan error asli jika respons bukan JSON.
-                }
-              }
-              throw new Error(detail);
-            }
-
-            if (!data || data.ok !== true) {
-              throw new Error(data && data.error ? data.error : "Respons publish tidak valid.");
-            }
-
-            centralConfigCache = null;
+            const data = await publishConfigNow();
 
             publishMessage = `Video berhasil ${nextStatus ? "diaktifkan" : "dinonaktifkan"} dan config berhasil dipublikasikan. Versi ${data.version} • ${data.activeVideoCount} video aktif. Cloudflare Pages akan memperbarui config.json.`;
           } catch (publishError) {
