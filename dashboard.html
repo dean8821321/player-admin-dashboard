@@ -275,59 +275,44 @@
       flex-wrap: wrap;
     }
 
-    .welcome-card {
-      padding: 27px;
-      margin-bottom: 27px;
-      border: 1px solid #294638;
-      border-radius: 14px;
-      background: linear-gradient(115deg, #14291f, #111a21);
-    }
-
-    .welcome-card h2 {
-      margin-bottom: 9px;
-      font-size: 19px;
-    }
-
-    .welcome-card p {
-      color: #a4b6ab;
-      font-size: 13px;
-      line-height: 1.7;
-    }
-
     .section-title {
       margin-bottom: 16px;
       font-size: 16px;
       font-weight: 700;
     }
 
-    .stats-grid {
+    .stats-strip {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-      margin-bottom: 30px;
+      gap: 10px;
+      margin-top: 22px;
     }
 
-    .stat-card {
-      min-height: 125px;
-      padding: 20px;
+    .stat-chip {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 13px 16px;
       border: 1px solid #25313d;
-      border-radius: 12px;
+      border-radius: 10px;
       background: #111821;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
     }
 
-    .stat-icon {
-      margin-bottom: 15px;
-      color: #52d99a;
-      font-size: 20px;
+    .stat-chip:hover {
+      border-color: #2f4a5c;
     }
 
-    .stat-label {
+    .stat-chip-label {
       color: #8d9aaa;
       font-size: 12px;
     }
 
-    .stat-value {
-      margin-top: 7px;
+    .stat-chip-value {
       font-size: 18px;
       font-weight: 700;
     }
@@ -506,10 +491,6 @@
         margin-left: 210px;
         padding: 25px;
       }
-
-      .stats-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
     }
 
     @media (max-width: 650px) {
@@ -564,7 +545,7 @@
         font-size: 21px;
       }
 
-      .stats-grid,
+      .stats-strip,
       .modules-grid {
         grid-template-columns: 1fr;
       }
@@ -574,16 +555,16 @@
 
     [hidden] { display: none !important; }
     .quick-publisher-card {
-      max-width: 680px;
-      margin: 28px auto 0;
-      padding: 28px;
+      max-width: 720px;
+      margin: 0 0 4px;
+      padding: 24px;
       border: 1px solid #263746;
       border-radius: 16px;
       background: #101923;
     }
     .quick-publisher-card h2 {
-      margin-bottom: 24px;
-      font-size: 19px;
+      margin-bottom: 18px;
+      font-size: 18px;
     }
     .quick-publisher-card .video-form-grid { grid-template-columns: 1fr; gap: 22px; }
     .quick-publisher-card .text-input,
@@ -674,7 +655,7 @@
         <div>
           <h1 class="page-title">Overview</h1>
           <p class="page-description">
-            Central Video Player Management Dashboard
+            Tambah video baru, lalu pantau ringkasan sistem di bawah.
           </p>
         </div>
 
@@ -688,40 +669,6 @@
       </header>
       <p class="manager-message" id="overviewPublishMessage" role="status" aria-live="polite"></p>
 
-      <section class="welcome-card">
-        <h2>Welcome to Player Admin 👋</h2>
-        <p>
-          Selamat datang di pusat pengelolaan video player.
-          Kelola halaman, video, iklan, dan konfigurasi
-          seluruh player dari satu dashboard.
-        </p>
-      </section>
-
-      <h2 class="section-title">System Overview</h2>
-
-      <section class="stats-grid">
-
-        <div class="stat-card">
-          <div class="stat-icon">▣</div>
-          <div class="stat-label">Total Pages</div>
-          <div class="stat-value" id="totalPagesValue">—</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon">▶</div>
-          <div class="stat-label">Total Videos</div>
-          <div class="stat-value" id="totalVideosValue">—</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon">◉</div>
-          <div class="stat-label">Active Videos</div>
-          <div class="stat-value" id="activeVideosValue">—</div>
-        </div>
-
-      </section>
-
-      <h2 class="section-title">Quick Video Publisher</h2>
       <div class="form-card quick-publisher-card" id="videoFormCard">
         <h2 id="videoFormTitle">Tambahkan Video Baru</h2>
         <form id="videoForm" autocomplete="off">
@@ -757,6 +704,23 @@
           <button type="button" id="openPublishedUrlButton">Buka Player</button>
         </div>
       </div>
+
+      <section class="stats-strip">
+        <button type="button" class="stat-chip" id="pagesStatChip">
+          <span class="stat-chip-label">Total Pages</span>
+          <span class="stat-chip-value" id="totalPagesValue">—</span>
+        </button>
+
+        <button type="button" class="stat-chip" id="videosStatChip">
+          <span class="stat-chip-label">Total Videos</span>
+          <span class="stat-chip-value" id="totalVideosValue">—</span>
+        </button>
+
+        <button type="button" class="stat-chip" id="activeVideosStatChip">
+          <span class="stat-chip-label">Active Videos</span>
+          <span class="stat-chip-value" id="activeVideosValue">—</span>
+        </button>
+      </section>
       </section>
 
       <section class="view-section" id="pageManagerView" hidden>
@@ -1970,6 +1934,10 @@
       histatsForm.addEventListener("submit", saveHistatsSettings);
       document.getElementById("reloadAdsButton").addEventListener("click", () => loadAdsSettings(true));
       document.getElementById("reloadHistatsButton").addEventListener("click", () => loadHistatsSettings(true));
+
+      document.getElementById("pagesStatChip").addEventListener("click", () => navigateTo("page-manager"));
+      document.getElementById("videosStatChip").addEventListener("click", () => navigateTo("video-manager"));
+      document.getElementById("activeVideosStatChip").addEventListener("click", () => navigateTo("video-manager"));
 
       addVideoButton.addEventListener("click", () => {
         navigateTo("overview");
