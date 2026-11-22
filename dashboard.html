@@ -561,12 +561,39 @@
         </div>
       </div>
 
-      <div class="nav-label">PENGATURAN</div>
+      <div class="nav-label">MAIN MENU</div>
+
+      <a href="#overview" class="nav-item">
+        <span class="nav-icon">▦</span>
+        Overview
+      </a>
+
+      <div class="nav-label">MANAGEMENT</div>
 
       <a href="#page-manager" class="nav-item" data-view="page-manager">
-        <span class="nav-icon">⚙</span>
+        <span class="nav-icon">▣</span>
         Facebook Pages
       </a>
+
+      <a href="#video-manager" class="nav-item active" data-view="video-manager">
+        <span class="nav-icon">▶</span>
+        Video Manager
+      </a>
+
+      <div class="nav-item">
+        <span class="nav-icon">▤</span>
+        Ads Manager
+      </div>
+
+      <div class="nav-item">
+        <span class="nav-icon">◉</span>
+        Histats Manager
+      </div>
+
+      <div class="nav-item">
+        <span class="nav-icon">⚙</span>
+        General Settings
+      </div>
 
       <div class="sidebar-bottom">
 
@@ -1000,12 +1027,18 @@
       }
 
       function setActiveView(view) {
+        const showOverview = view === "overview";
         const showPages = view === "page-manager";
-        const showVideos = !showPages;
-        overviewView.hidden = true;
+        const showVideos = view === "video-manager";
+
+        overviewView.hidden = !showOverview;
         pageManagerView.hidden = !showPages;
         videoManagerView.hidden = !showVideos;
+
+        overviewLink.classList.toggle("active", showOverview);
         pageManagerLink.classList.toggle("active", showPages);
+        videoManagerLink.classList.toggle("active", showVideos);
+
         if (showPages) loadPages();
         if (showVideos) loadVideos();
       }
@@ -1587,10 +1620,22 @@
         redirectToLogin();
       });
 
+      overviewLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        setActiveView("overview");
+        window.history.replaceState(null, "", "#overview");
+      });
+
       pageManagerLink.addEventListener("click", (event) => {
         event.preventDefault();
         setActiveView("page-manager");
         window.history.replaceState(null, "", "#page-manager");
+      });
+
+      videoManagerLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        setActiveView("video-manager");
+        window.history.replaceState(null, "", "#video-manager");
       });
 
 
