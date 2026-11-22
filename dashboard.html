@@ -71,6 +71,36 @@
       border-right: 1px solid #202d39;
     }
 
+    .menu-toggle {
+      display: none;
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 30;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border: 1px solid #25313d;
+      border-radius: 10px;
+      background: #111821;
+      color: #e2e8f0;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .menu-toggle:active {
+      background: #1a2530;
+    }
+
+    .sidebar-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 15;
+      background: rgba(5, 9, 13, 0.65);
+    }
+
     .brand {
       display: flex;
       align-items: center;
@@ -483,13 +513,30 @@
     }
 
     @media (max-width: 650px) {
+      .menu-toggle {
+        display: flex;
+      }
+
       .sidebar {
-        position: relative;
-        width: 100%;
-        min-height: auto;
-        padding: 16px;
-        border-right: none;
-        border-bottom: 1px solid #25313d;
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 20;
+        width: min(280px, 82vw);
+        height: 100%;
+        padding: 68px 16px 16px;
+        overflow-y: auto;
+        border-right: 1px solid #25313d;
+        border-bottom: none;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      body.nav-open {
+        overflow: hidden;
       }
 
       .brand {
@@ -506,7 +553,7 @@
 
       .main {
         margin-left: 0;
-        padding: 22px 16px;
+        padding: 72px 16px 22px;
       }
 
       .topbar {
@@ -560,7 +607,10 @@
 
   <div class="app" id="app">
 
-    <aside class="sidebar">
+    <button type="button" class="menu-toggle" id="menuToggle" aria-label="Buka menu" aria-expanded="false" aria-controls="sidebar">☰</button>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+    <aside class="sidebar" id="sidebar">
 
       <div class="brand">
         <div class="brand-icon">P</div>
@@ -901,6 +951,9 @@
 
       const loadingScreen = document.getElementById("loadingScreen");
       const app = document.getElementById("app");
+      const menuToggle = document.getElementById("menuToggle");
+      const sidebar = document.getElementById("sidebar");
+      const sidebarBackdrop = document.getElementById("sidebarBackdrop");
       const adminEmail = document.getElementById("adminEmail");
       const adminAvatar = document.getElementById("adminAvatar");
       const logoutButton = document.getElementById("logoutButton");
@@ -1242,6 +1295,7 @@
 
       function navigateTo(view, push = true) {
         setActiveView(view);
+        setSidebarOpen(false);
         const target = `#${view}`;
         if (window.location.hash === target) return;
         if (push) {
@@ -1249,6 +1303,16 @@
         } else {
           window.history.replaceState(null, "", target);
         }
+      }
+
+      function setSidebarOpen(open) {
+        if (!sidebar || !menuToggle || !sidebarBackdrop) return;
+        sidebar.classList.toggle("open", open);
+        sidebarBackdrop.hidden = !open;
+        menuToggle.setAttribute("aria-expanded", open ? "true" : "false");
+        menuToggle.setAttribute("aria-label", open ? "Tutup menu" : "Buka menu");
+        menuToggle.textContent = open ? "✕" : "☰";
+        document.body.classList.toggle("nav-open", open);
       }
 
       function resetPageForm() {
@@ -1886,6 +1950,20 @@
       window.addEventListener("hashchange", () => {
         if (!accessGranted) return;
         navigateTo(viewFromHash() || "overview", false);
+      });
+
+      menuToggle.addEventListener("click", () => {
+        setSidebarOpen(!sidebar.classList.contains("open"));
+      });
+
+      sidebarBackdrop.addEventListener("click", () => setSidebarOpen(false));
+
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") setSidebarOpen(false);
+      });
+
+      window.addEventListener("resize", () => {
+        if (window.innerWidth > 650) setSidebarOpen(false);
       });
 
       adsForm.addEventListener("submit", saveAdsSettings);
