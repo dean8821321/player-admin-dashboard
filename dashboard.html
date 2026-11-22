@@ -281,42 +281,6 @@
       font-weight: 700;
     }
 
-    .stats-strip {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 22px;
-    }
-
-    .stat-chip {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 13px 16px;
-      border: 1px solid #25313d;
-      border-radius: 10px;
-      background: #111821;
-      color: inherit;
-      font: inherit;
-      text-align: left;
-      cursor: pointer;
-    }
-
-    .stat-chip:hover {
-      border-color: #2f4a5c;
-    }
-
-    .stat-chip-label {
-      color: #8d9aaa;
-      font-size: 12px;
-    }
-
-    .stat-chip-value {
-      font-size: 18px;
-      font-weight: 700;
-    }
-
     .modules-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -545,7 +509,6 @@
         font-size: 21px;
       }
 
-      .stats-strip,
       .modules-grid {
         grid-template-columns: 1fr;
       }
@@ -704,23 +667,6 @@
           <button type="button" id="openPublishedUrlButton">Buka Player</button>
         </div>
       </div>
-
-      <section class="stats-strip">
-        <button type="button" class="stat-chip" id="pagesStatChip">
-          <span class="stat-chip-label">Total Pages</span>
-          <span class="stat-chip-value" id="totalPagesValue">—</span>
-        </button>
-
-        <button type="button" class="stat-chip" id="videosStatChip">
-          <span class="stat-chip-label">Total Videos</span>
-          <span class="stat-chip-value" id="totalVideosValue">—</span>
-        </button>
-
-        <button type="button" class="stat-chip" id="activeVideosStatChip">
-          <span class="stat-chip-label">Active Videos</span>
-          <span class="stat-chip-value" id="activeVideosValue">—</span>
-        </button>
-      </section>
       </section>
 
       <section class="view-section" id="pageManagerView" hidden>
@@ -943,9 +889,6 @@
       const cancelPageButton = document.getElementById("cancelPageButton");
       const pagesTableBody = document.getElementById("pagesTableBody");
       const pageManagerMessage = document.getElementById("pageManagerMessage");
-      const totalPagesValue = document.getElementById("totalPagesValue");
-      const totalVideosValue = document.getElementById("totalVideosValue");
-      const activeVideosValue = document.getElementById("activeVideosValue");
       const addVideoButton = document.getElementById("addVideoButton");
       const videoFormCard = document.getElementById("videoFormCard");
       const videoForm = document.getElementById("videoForm");
@@ -1306,7 +1249,6 @@
 
       function renderPages(pages) {
         pagesTableBody.replaceChildren();
-        totalPagesValue.textContent = String(pages.length);
 
         if (!pages.length) {
           const row = document.createElement("tr");
@@ -1560,8 +1502,6 @@
 
       function renderVideos(videos) {
         videosTableBody.replaceChildren();
-        totalVideosValue.textContent = String(videos.length);
-        activeVideosValue.textContent = String(videos.filter((video) => video.is_active).length);
 
         if (!videos.length) {
           const row = document.createElement("tr");
@@ -1934,10 +1874,6 @@
       histatsForm.addEventListener("submit", saveHistatsSettings);
       document.getElementById("reloadAdsButton").addEventListener("click", () => loadAdsSettings(true));
       document.getElementById("reloadHistatsButton").addEventListener("click", () => loadHistatsSettings(true));
-
-      document.getElementById("pagesStatChip").addEventListener("click", () => navigateTo("page-manager"));
-      document.getElementById("videosStatChip").addEventListener("click", () => navigateTo("video-manager"));
-      document.getElementById("activeVideosStatChip").addEventListener("click", () => navigateTo("video-manager"));
 
       addVideoButton.addEventListener("click", () => {
         navigateTo("overview");
