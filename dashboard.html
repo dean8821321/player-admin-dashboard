@@ -998,6 +998,8 @@
       let pagesCache = null;
       let videosCache = null;
       let videoPageOptionsCache = null;
+      let pagesInFlight = null;
+      let videosInFlight = null;
 
       let verificationInProgress = false;
       let accessGranted = false;
@@ -1576,6 +1578,7 @@
       async function loadPages(forceReload = false) {
         if (!accessGranted) return;
         if (!forceReload && pagesCache) { renderPages(pagesCache); return; }
+        if (!forceReload && pagesInFlight) return pagesInFlight;
         if (forceReload) {
           // Nama page berubah/hilang -> opsi dropdown dan tabel video ikut segarkan.
           videoPageOptionsCache = null;
@@ -1584,21 +1587,25 @@
         showSkeletonRows(pagesTableBody, 4, 5);
         setManagerMessage("");
 
-        const { data, error } = await supabaseClient
-          .from("facebook_pages")
-          .select("id, page_name, is_active, created_at")
-          .order("created_at", { ascending: false });
+        pagesInFlight = (async () => {
+          const { data, error } = await supabaseClient
+            .from("facebook_pages")
+            .select("id, page_name, is_active, created_at")
+            .order("created_at", { ascending: false });
 
-        if (error) {
-          console.error("Load Facebook Pages error:", error);
-          pagesTableBody.innerHTML = '<tr><td colspan="4" class="empty-row">Gagal memuat data. Periksa koneksi dan kebijakan akses Supabase.</td></tr>';
-          setManagerMessage(error.message, "error");
-          return;
-        }
+          if (error) {
+            console.error("Load Facebook Pages error:", error);
+            pagesTableBody.innerHTML = '<tr><td colspan="4" class="empty-row">Gagal memuat data. Periksa koneksi dan kebijakan akses Supabase.</td></tr>';
+            setManagerMessage(error.message, "error");
+            return;
+          }
 
-        pagesLoaded = true;
-        pagesCache = data || [];
-        renderPages(pagesCache);
+          pagesLoaded = true;
+          pagesCache = data || [];
+          renderPages(pagesCache);
+        })();
+
+        try { await pagesInFlight; } finally { pagesInFlight = null; }
       }
 
       function openEditForm(page) {
@@ -1897,24 +1904,29 @@
       async function loadVideos(forceReload = false) {
         if (!accessGranted) return;
         if (!forceReload && videosCache) { renderVideos(videosCache); return; }
+        if (!forceReload && videosInFlight) return videosInFlight;
         showSkeletonRows(videosTableBody, 8, 5);
         setVideoManagerMessage("");
 
-        const { data, error } = await supabaseClient
-          .from("videos")
-          .select("id, video_id, title, video_url, page_id, is_active, created_at, facebook_pages(page_name)")
-          .order("created_at", { ascending: false });
+        videosInFlight = (async () => {
+          const { data, error } = await supabaseClient
+            .from("videos")
+            .select("id, video_id, title, video_url, page_id, is_active, created_at, facebook_pages(page_name)")
+            .order("created_at", { ascending: false });
 
-        if (error) {
-          console.error("Load videos error:", error);
-          videosTableBody.innerHTML = '<tr><td colspan="8" class="empty-row">Gagal memuat data. Periksa tabel videos dan kebijakan akses Supabase.</td></tr>';
-          setVideoManagerMessage(error.message, "error");
-          return;
-        }
+          if (error) {
+            console.error("Load videos error:", error);
+            videosTableBody.innerHTML = '<tr><td colspan="8" class="empty-row">Gagal memuat data. Periksa tabel videos dan kebijakan akses Supabase.</td></tr>';
+            setVideoManagerMessage(error.message, "error");
+            return;
+          }
 
-        videosLoaded = true;
-        videosCache = data || [];
-        renderVideos(videosCache);
+          videosLoaded = true;
+          videosCache = data || [];
+          renderVideos(videosCache);
+        })();
+
+        try { await videosInFlight; } finally { videosInFlight = null; }
       }
 
       async function openVideoEditForm(video) {
