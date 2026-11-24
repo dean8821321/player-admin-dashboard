@@ -115,35 +115,21 @@ function mergeAdSlot(
     result.enabled = incoming.enabled;
   }
 
-  if (incoming.key !== undefined) {
-    if (typeof incoming.key !== "string" || incoming.key.length > 200) {
-      throw new Error(`Key ${slotName} tidak valid.`);
+  if (incoming.script !== undefined) {
+    if (typeof incoming.script !== "string" || incoming.script.length > 5000) {
+      throw new Error(`Script ${slotName} tidak valid.`);
     }
-    result.key = incoming.key.trim();
+    result.script = incoming.script.trim();
   }
 
-  if (incoming.scriptUrl !== undefined) {
-    if (!isHttpsUrlOrEmpty(incoming.scriptUrl)) {
-      throw new Error(`Script URL ${slotName} harus menggunakan HTTPS.`);
+  if (incoming.position !== undefined) {
+    if (
+      typeof incoming.position !== "string" ||
+      !LP_AD_POSITIONS.has(incoming.position)
+    ) {
+      throw new Error("Posisi LP Ad hanya boleh top, bottom, atau both.");
     }
-    result.scriptUrl = incoming.scriptUrl.trim();
-  }
-
-  if (incoming.format !== undefined) {
-    if (incoming.format !== "iframe" && incoming.format !== "script") {
-      throw new Error(`Format ${slotName} hanya boleh iframe atau script.`);
-    }
-    result.format = incoming.format;
-  }
-
-  for (const dimension of ["width", "height"] as const) {
-    if (incoming[dimension] !== undefined) {
-      const value = incoming[dimension];
-      if (!Number.isInteger(value) || value < 1 || value > 2000) {
-        throw new Error(`${dimension} ${slotName} harus berupa angka 1 sampai 2000.`);
-      }
-      result[dimension] = value;
-    }
+    result.position = incoming.position;
   }
 
   return result;
@@ -170,18 +156,11 @@ function mergePopunder(
     result.enabled = incoming.enabled;
   }
 
-  if (incoming.key !== undefined) {
-    if (typeof incoming.key !== "string" || incoming.key.length > 200) {
-      throw new Error(`Key popunder ${slotName} tidak valid.`);
+  if (incoming.script !== undefined) {
+    if (typeof incoming.script !== "string" || incoming.script.length > 5000) {
+      throw new Error(`Script popunder ${slotName} tidak valid.`);
     }
-    result.key = incoming.key.trim();
-  }
-
-  if (incoming.scriptUrl !== undefined) {
-    if (!isHttpsUrlOrEmpty(incoming.scriptUrl)) {
-      throw new Error(`Script URL popunder ${slotName} harus menggunakan HTTPS.`);
-    }
-    result.scriptUrl = incoming.scriptUrl.trim();
+    result.script = incoming.script.trim();
   }
 
   return result;
@@ -223,16 +202,6 @@ function mergeLpAdSlot(
   existing: unknown,
 ): Record<string, unknown> {
   const merged = mergeAdSlot(incoming, existing, "LP Ad");
-
-  if (isPlainObject(incoming) && incoming.position !== undefined) {
-    if (
-      typeof incoming.position !== "string" ||
-      !LP_AD_POSITIONS.has(incoming.position)
-    ) {
-      throw new Error("Posisi LP Ad hanya boleh top, bottom, atau both.");
-    }
-    merged.position = incoming.position;
-  }
 
   if (merged.position === undefined) {
     merged.position = "top";
@@ -296,18 +265,11 @@ function mergeHistatsSettings(
     result.enabled = incoming.enabled;
   }
 
-  if (incoming.siteId !== undefined) {
-    if (typeof incoming.siteId !== "string" || incoming.siteId.length > 100) {
-      throw new Error("Histats Site ID tidak valid.");
+  if (incoming.script !== undefined) {
+    if (typeof incoming.script !== "string" || incoming.script.length > 5000) {
+      throw new Error("Script Histats tidak valid.");
     }
-    result.siteId = incoming.siteId.trim();
-  }
-
-  if (incoming.scriptUrl !== undefined) {
-    if (!isHttpsUrlOrEmpty(incoming.scriptUrl)) {
-      throw new Error("Histats Script URL harus menggunakan HTTPS.");
-    }
-    result.scriptUrl = incoming.scriptUrl.trim();
+    result.script = incoming.script.trim();
   }
 
   for (const placement of ["player", "lp"] as const) {

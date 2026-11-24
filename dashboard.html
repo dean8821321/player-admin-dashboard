@@ -386,6 +386,7 @@
       width: 100%; min-height: 41px; padding: 10px 12px;
       border: 1px solid #344454; border-radius: 8px;
       outline: none; background: #0b1219; color: #f1f5f9; font: inherit; font-size: 13px;
+      resize: vertical;
     }
     .text-input:focus { border-color: #35d28b; box-shadow: 0 0 0 3px rgba(53,210,139,.12); }
     .form-actions { display: flex; gap: 8px; }
@@ -787,35 +788,21 @@
 
         <div class="ads-tab-panel active" id="adsPlayerPanel" role="tabpanel" aria-labelledby="adsTabPlayer">
           <form class="form-card" id="adsPlayerForm" autocomplete="off">
-            <p class="video-help">Tampil di dalam tab player, di atas dan di bawah video.</p>
+            <p class="video-help">Tampil di dalam tab player, di atas dan di bawah video. Tempel snippet script iklan penuh.</p>
             <p class="manager-message" id="adsMessage" role="status" aria-live="polite"></p>
             <label class="setting-toggle"><input id="adsEnabled" type="checkbox"> Aktifkan iklan di player</label>
             <div class="settings-grid">
               <section class="settings-panel">
                 <h3>Banner Atas (Top)</h3>
                 <label class="setting-toggle"><input id="topAdEnabled" type="checkbox"> Aktifkan banner atas</label>
-                <label class="field-label" for="topAdKey">Ad Key</label>
-                <input class="text-input" id="topAdKey" type="text" maxlength="200" placeholder="Masukkan key iklan">
-                <label class="field-label" for="topAdScript">Script URL</label>
-                <input class="text-input" id="topAdScript" type="url" maxlength="1000" placeholder="https://domain-iklan.com/script.js">
-                <div class="settings-grid settings-grid-small">
-                  <div><label class="field-label" for="topAdFormat">Format</label><select class="video-select" id="topAdFormat"><option value="iframe">Iframe</option><option value="script">Script</option></select></div>
-                  <div><label class="field-label" for="topAdWidth">Width</label><input class="text-input" id="topAdWidth" type="number" min="1" max="2000" value="320"></div>
-                  <div><label class="field-label" for="topAdHeight">Height</label><input class="text-input" id="topAdHeight" type="number" min="1" max="2000" value="50"></div>
-                </div>
+                <label class="field-label" for="topAdScript">Script Iklan</label>
+                <textarea class="text-input" id="topAdScript" rows="5" maxlength="5000" placeholder="&lt;script&gt;window.atOptions = {...}&lt;/script&gt;&#10;&lt;script src='...'&gt;&lt;/script&gt;"></textarea>
               </section>
               <section class="settings-panel">
                 <h3>Banner Bawah (Bottom)</h3>
                 <label class="setting-toggle"><input id="bottomAdEnabled" type="checkbox"> Aktifkan banner bawah</label>
-                <label class="field-label" for="bottomAdKey">Ad Key</label>
-                <input class="text-input" id="bottomAdKey" type="text" maxlength="200" placeholder="Masukkan key iklan">
-                <label class="field-label" for="bottomAdScript">Script URL</label>
-                <input class="text-input" id="bottomAdScript" type="url" maxlength="1000" placeholder="https://domain-iklan.com/script.js">
-                <div class="settings-grid settings-grid-small">
-                  <div><label class="field-label" for="bottomAdFormat">Format</label><select class="video-select" id="bottomAdFormat"><option value="iframe">Iframe</option><option value="script">Script</option></select></div>
-                  <div><label class="field-label" for="bottomAdWidth">Width</label><input class="text-input" id="bottomAdWidth" type="number" min="1" max="2000" value="300"></div>
-                  <div><label class="field-label" for="bottomAdHeight">Height</label><input class="text-input" id="bottomAdHeight" type="number" min="1" max="2000" value="250"></div>
-                </div>
+                <label class="field-label" for="bottomAdScript">Script Iklan</label>
+                <textarea class="text-input" id="bottomAdScript" rows="5" maxlength="5000" placeholder="&lt;script&gt;window.atOptions = {...}&lt;/script&gt;&#10;&lt;script src='...'&gt;&lt;/script&gt;"></textarea>
               </section>
             </div>
 
@@ -823,10 +810,8 @@
               <section class="ad-type-panel">
                 <h4>Popunder</h4>
                 <label class="setting-toggle"><input id="popunderAdEnabled" type="checkbox"> Aktifkan popunder</label>
-                <label class="field-label" for="popunderAdKey">Ad Key</label>
-                <input class="text-input" id="popunderAdKey" type="text" maxlength="200" placeholder="Key popunder (opsional)">
-                <label class="field-label" for="popunderAdScript">Script URL</label>
-                <input class="text-input" id="popunderAdScript" type="url" maxlength="1000" placeholder="https://domain-iklan.com/popunder.js">
+                <label class="field-label" for="popunderAdScript">Script Popunder</label>
+                <textarea class="text-input" id="popunderAdScript" rows="4" maxlength="5000" placeholder="&lt;script src='...'&gt;&lt;/script&gt;"></textarea>
               </section>
               <section class="ad-type-panel">
                 <h4>Direct Link</h4>
@@ -843,7 +828,7 @@
 
         <div class="ads-tab-panel" id="adsLpPanel" role="tabpanel" aria-labelledby="adsTabLp">
           <form class="form-card" id="adsLpForm" autocomplete="off">
-            <p class="video-help">Tampil di halaman pembuka sebelum pengunjung masuk ke video.</p>
+            <p class="video-help">Tampil di halaman pembuka sebelum pengunjung masuk ke video. Tempel snippet script iklan penuh.</p>
             <p class="manager-message" id="lpAdsMessage" role="status" aria-live="polite"></p>
             <label class="setting-toggle"><input id="lpAdEnabled" type="checkbox"> Aktifkan iklan di halaman LP</label>
             <div class="settings-grid">
@@ -855,15 +840,8 @@
                   <option value="bottom">Bawah kartu video</option>
                   <option value="both">Atas dan bawah</option>
                 </select>
-                <label class="field-label" for="lpAdKey">Ad Key</label>
-                <input class="text-input" id="lpAdKey" type="text" maxlength="200" placeholder="Masukkan key iklan LP">
-                <label class="field-label" for="lpAdScript">Script URL</label>
-                <input class="text-input" id="lpAdScript" type="url" maxlength="1000" placeholder="https://domain-iklan.com/script.js">
-                <div class="settings-grid settings-grid-small">
-                  <div><label class="field-label" for="lpAdFormat">Format</label><select class="video-select" id="lpAdFormat"><option value="iframe">Iframe</option><option value="script">Script</option></select></div>
-                  <div><label class="field-label" for="lpAdWidth">Width</label><input class="text-input" id="lpAdWidth" type="number" min="1" max="2000" value="320"></div>
-                  <div><label class="field-label" for="lpAdHeight">Height</label><input class="text-input" id="lpAdHeight" type="number" min="1" max="2000" value="50"></div>
-                </div>
+                <label class="field-label" for="lpAdScript">Script Iklan</label>
+                <textarea class="text-input" id="lpAdScript" rows="5" maxlength="5000" placeholder="&lt;script&gt;window.atOptions = {...}&lt;/script&gt;&#10;&lt;script src='...'&gt;&lt;/script&gt;"></textarea>
               </section>
             </div>
 
@@ -871,10 +849,8 @@
               <section class="ad-type-panel">
                 <h4>Popunder LP</h4>
                 <label class="setting-toggle"><input id="lpPopunderEnabled" type="checkbox"> Aktifkan popunder di LP</label>
-                <label class="field-label" for="lpPopunderKey">Ad Key</label>
-                <input class="text-input" id="lpPopunderKey" type="text" maxlength="200" placeholder="Key popunder (opsional)">
-                <label class="field-label" for="lpPopunderScript">Script URL</label>
-                <input class="text-input" id="lpPopunderScript" type="url" maxlength="1000" placeholder="https://domain-iklan.com/popunder.js">
+                <label class="field-label" for="lpPopunderScript">Script Popunder</label>
+                <textarea class="text-input" id="lpPopunderScript" rows="4" maxlength="5000" placeholder="&lt;script src='...'&gt;&lt;/script&gt;"></textarea>
               </section>
               <section class="ad-type-panel">
                 <h4>Direct Link LP</h4>
@@ -902,15 +878,13 @@
         <form class="form-card" id="histatsForm" autocomplete="off">
           <h2>Konfigurasi Histats</h2>
           <label class="setting-toggle"><input id="histatsEnabled" type="checkbox"> Aktifkan Histats</label>
-          <label class="field-label" for="histatsSiteId">Histats Site ID</label>
-          <input class="text-input" id="histatsSiteId" type="text" maxlength="100" placeholder="Contoh: 1,5020708,4,0,0,0,00010000">
-          <label class="field-label" for="histatsScriptUrl">Histats Script URL</label>
-          <input class="text-input" id="histatsScriptUrl" type="url" maxlength="1000" placeholder="https://s10.histats.com/js15_as.js">
+          <label class="field-label" for="histatsScript">Script Histats</label>
+          <textarea class="text-input" id="histatsScript" rows="8" maxlength="5000" placeholder="&lt;!-- Histats.com  START  --&gt;&#10;&lt;script type=&quot;text/javascript&quot;&gt;...&lt;/script&gt;&#10;&lt;!-- Histats.com  END  --&gt;"></textarea>
           <div class="settings-grid settings-grid-small" style="margin-top:14px;">
             <label class="setting-toggle"><input id="histatsPlayerEnabled" type="checkbox"> Aktifkan di Player</label>
             <label class="setting-toggle"><input id="histatsLpEnabled" type="checkbox"> Aktifkan di LP</label>
           </div>
-          <p class="video-help">Gunakan Site ID dan URL script resmi dari akun Histats. URL wajib menggunakan HTTPS.</p>
+          <p class="video-help">Tempel snippet script Histats lengkap dari akun Histats kamu. Script akan di-render apa adanya di halaman yang dipilih.</p>
           <div class="form-actions settings-actions"><button class="primary-button" id="saveHistatsButton" type="submit">Simpan &amp; Publish Histats</button><button class="secondary-button" id="reloadHistatsButton" type="button">Muat Ulang</button></div>
         </form>
       </section>
@@ -1135,21 +1109,28 @@
         return config;
       }
 
+      function validateAdScript(value, label, required) {
+        const trimmed = value.trim();
+        if (!trimmed) {
+          if (required) throw new Error(`Script iklan ${label} wajib diisi.`);
+          return "";
+        }
+        if (!/<script[\s>]/i.test(trimmed)) {
+          throw new Error(`Script iklan ${label} harus berisi tag <script>.`);
+        }
+        return trimmed;
+      }
+
       function applyAdSlotToForm(prefix, slot) {
         const source = slot && typeof slot === "object" ? slot : {};
         document.getElementById(`${prefix}AdEnabled`).checked = source.enabled === true;
-        setInputValue(`${prefix}AdKey`, source.key);
-        setInputValue(`${prefix}AdScript`, source.scriptUrl);
-        setInputValue(`${prefix}AdFormat`, source.format || "iframe");
-        setInputValue(`${prefix}AdWidth`, Number.isInteger(source.width) ? source.width : prefix === "top" ? 320 : 300);
-        setInputValue(`${prefix}AdHeight`, Number.isInteger(source.height) ? source.height : prefix === "top" ? 50 : 250);
+        setInputValue(`${prefix}AdScript`, source.script);
       }
 
       function applyPopunderToForm(prefix, popunder) {
         const source = popunder && typeof popunder === "object" ? popunder : {};
         document.getElementById(`${prefix}Enabled`).checked = source.enabled === true;
-        setInputValue(`${prefix}Key`, source.key);
-        setInputValue(`${prefix}Script`, source.scriptUrl);
+        setInputValue(`${prefix}Script`, source.script);
       }
 
       function applyDirectToForm(prefix, direct) {
@@ -1160,16 +1141,12 @@
 
       function readPopunderFromForm(prefix, label) {
         const enabled = document.getElementById(`${prefix}Enabled`).checked;
-        const scriptUrl = validateHttpsUrl(
+        const script = validateAdScript(
           document.getElementById(`${prefix}Script`).value,
-          `Script URL popunder ${label}`,
+          `popunder ${label}`,
           enabled
         );
-        return {
-          enabled,
-          key: document.getElementById(`${prefix}Key`).value.trim(),
-          scriptUrl
-        };
+        return { enabled, script };
       }
 
       function readDirectFromForm(prefix, label) {
@@ -1183,24 +1160,13 @@
       }
 
       function readAdSlotFromForm(prefix, label) {
-        const script = validateHttpsUrl(
+        const enabled = document.getElementById(`${prefix}AdEnabled`).checked;
+        const script = validateAdScript(
           document.getElementById(`${prefix}AdScript`).value,
-          `Script URL iklan ${label}`,
-          document.getElementById(`${prefix}AdEnabled`).checked
+          `banner ${label}`,
+          enabled
         );
-        const numberValue = (id, fieldLabel) => {
-          const value = Number(document.getElementById(id).value);
-          if (!Number.isInteger(value) || value < 1 || value > 2000) throw new Error(`${fieldLabel} harus angka 1 sampai 2000.`);
-          return value;
-        };
-        return {
-          enabled: document.getElementById(`${prefix}AdEnabled`).checked,
-          key: document.getElementById(`${prefix}AdKey`).value.trim(),
-          scriptUrl: script,
-          format: document.getElementById(`${prefix}AdFormat`).value,
-          width: numberValue(`${prefix}AdWidth`, `Lebar iklan ${label}`),
-          height: numberValue(`${prefix}AdHeight`, `Tinggi iklan ${label}`)
-        };
+        return { enabled, script };
       }
 
       async function loadAdsSettings(forceReload = false) {
@@ -1212,17 +1178,9 @@
           const bottom = ads.bottom && typeof ads.bottom === "object" ? ads.bottom : {};
           document.getElementById("adsEnabled").checked = ads.enabled === true;
           document.getElementById("topAdEnabled").checked = top.enabled === true;
-          setInputValue("topAdKey", top.key);
-          setInputValue("topAdScript", top.scriptUrl);
-          setInputValue("topAdFormat", top.format || "iframe");
-          setInputValue("topAdWidth", Number.isInteger(top.width) ? top.width : 320);
-          setInputValue("topAdHeight", Number.isInteger(top.height) ? top.height : 50);
+          setInputValue("topAdScript", top.script);
           document.getElementById("bottomAdEnabled").checked = bottom.enabled === true;
-          setInputValue("bottomAdKey", bottom.key);
-          setInputValue("bottomAdScript", bottom.scriptUrl);
-          setInputValue("bottomAdFormat", bottom.format || "iframe");
-          setInputValue("bottomAdWidth", Number.isInteger(bottom.width) ? bottom.width : 300);
-          setInputValue("bottomAdHeight", Number.isInteger(bottom.height) ? bottom.height : 250);
+          setInputValue("bottomAdScript", bottom.script);
           applyPopunderToForm("popunderAd", ads.popunder);
           applyDirectToForm("directAd", ads.direct);
           setSettingsMessage(adsMessage, `Iklan player dimuat. Versi config: ${config.version ?? "—"}.`, "success");
@@ -1239,11 +1197,7 @@
           const lp = ads.lp && typeof ads.lp === "object" ? ads.lp : {};
           document.getElementById("lpAdEnabled").checked = lp.enabled === true;
           setInputValue("lpAdPosition", lp.position === "bottom" || lp.position === "both" ? lp.position : "top");
-          setInputValue("lpAdKey", lp.key);
-          setInputValue("lpAdScript", lp.scriptUrl);
-          setInputValue("lpAdFormat", lp.format || "iframe");
-          setInputValue("lpAdWidth", Number.isInteger(lp.width) ? lp.width : 320);
-          setInputValue("lpAdHeight", Number.isInteger(lp.height) ? lp.height : 50);
+          setInputValue("lpAdScript", lp.script);
           applyPopunderToForm("lpPopunder", lp.popunder);
           applyDirectToForm("lpDirect", lp.direct);
           setSettingsMessage(lpAdsMessage, `Iklan LP dimuat. Versi config: ${config.version ?? "—"}.`, "success");
@@ -1258,9 +1212,7 @@
           const config = await loadCentralConfig(forceReload);
           const histats = config.histats && typeof config.histats === "object" ? config.histats : {};
           document.getElementById("histatsEnabled").checked = histats.enabled === true;
-          setInputValue("histatsSiteId", histats.siteId);
-          setInputValue("histatsScriptUrl", histats.scriptUrl);
-          // Default: kalau enabled=true tapi player/lp belum diset, aktifkan keduanya
+          setInputValue("histatsScript", histats.script);
           const playerEnabled = histats.player !== undefined ? histats.player === true : histats.enabled === true;
           const lpEnabled = histats.lp !== undefined ? histats.lp === true : histats.enabled === true;
           document.getElementById("histatsPlayerEnabled").checked = playerEnabled;
@@ -1336,13 +1288,14 @@
         event.preventDefault();
         try {
           const enabled = document.getElementById("histatsEnabled").checked;
-          const siteId = document.getElementById("histatsSiteId").value.trim();
-          const scriptUrl = validateHttpsUrl(document.getElementById("histatsScriptUrl").value, "Histats Script URL", enabled);
-          if (enabled && !siteId) throw new Error("Histats Site ID wajib diisi saat Histats diaktifkan.");
+          const script = validateAdScript(
+            document.getElementById("histatsScript").value,
+            "Histats",
+            enabled
+          );
           const histats = {
             enabled,
-            siteId,
-            scriptUrl,
+            script,
             player: document.getElementById("histatsPlayerEnabled").checked,
             lp: document.getElementById("histatsLpEnabled").checked
           };
