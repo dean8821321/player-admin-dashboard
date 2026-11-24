@@ -424,6 +424,15 @@
     .pages-table th, .pages-table td { padding: 14px 12px; border-bottom: 1px solid #25313d; text-align: left; font-size: 12px; }
     .pages-table th { color: #8292a3; font-weight: 600; white-space: nowrap; }
     .pages-table td { color: #dce5ee; }
+    .skeleton-row td { padding: 14px 12px; border-bottom: 1px solid #25313d; }
+    .skeleton-cell {
+      height: 14px;
+      border-radius: 4px;
+      background-image: linear-gradient(90deg, #1a2633 25%, #25313d 50%, #1a2633 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite linear;
+    }
+    @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
     .empty-row { padding: 28px !important; text-align: center !important; color: #8995a5 !important; }
     .page-status { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 20px; font-size: 10px; font-weight: 700; }
     .page-status.on { background: #10291e; color: #52d99a; }
@@ -690,6 +699,7 @@
             <p class="page-description">Kelola nama Facebook Page yang dipakai pada title player.</p>
           </div>
           <div class="topbar-actions">
+            <button type="button" class="secondary-button" id="reloadPagesButton">Muat Ulang</button>
             <button type="button" class="primary-button" id="addPageButton">＋ Add Page</button>
           </div>
         </header>
@@ -746,6 +756,7 @@
             <h2 class="section-title" style="margin-bottom:5px">Daftar Video</h2>
             <p class="page-description" style="margin-top:0">URL CDN disimpan permanen saat video ditambahkan atau diperbarui.</p>
           </div>
+          <button type="button" class="secondary-button" id="reloadVideosButton">Muat Ulang</button>
           <button type="button" class="primary-button" id="addVideoButton">＋ Add Video</button>
         </div>
 
@@ -983,9 +994,30 @@
       let editingPageId = null;
       let editingVideoId = null;
       let pagesLoaded = false;
+      let videosLoaded = false;
+      let pagesCache = null;
+      let videosCache = null;
+      let videoPageOptionsCache = null;
 
       let verificationInProgress = false;
       let accessGranted = false;
+
+      function showSkeletonRows(tableBody, columns, rows = 5) {
+        tableBody.innerHTML = "";
+        for (let i = 0; i < rows; i++) {
+          const tr = document.createElement("tr");
+          tr.className = "skeleton-row";
+          for (let j = 0; j < columns; j++) {
+            const td = document.createElement("td");
+            const div = document.createElement("div");
+            div.className = "skeleton-cell";
+            div.style.width = j === columns - 1 ? "60%" : "90%";
+            td.appendChild(div);
+            tr.appendChild(td);
+          }
+          tableBody.appendChild(tr);
+        }
+      }
 
       function setManagerMessage(message, type = "") {
         pageManagerMessage.textContent = message;
@@ -1390,14 +1422,41 @@
         videoManagerLink.classList.toggle("active", showVideos);
         adsManagerLink.classList.toggle("active", showAds);
         histatsSettingsLink.classList.toggle("active", showHistats);
-        if (showOverview || showPages) loadPages();
-        if (showOverview || showVideos) loadVideos();
-        if (showOverview) loadVideoPageOptions().catch((error) => setVideoManagerMessage(`Gagal memuat Facebook Page: ${error.message}`, "error"));
+        if (showOverview) {
+          loadOverviewData();
+        } else {
+          if (showPages) loadPages();
+          if (showVideos) loadVideos();
+        }
         if (showAds) {
           loadAdsSettings();
           loadLpAdsSettings();
         }
         if (showHistats) loadHistatsSettings();
+      }
+
+      async function loadOverviewData() {
+        // Pages & Videos diambil bersamaan; opsi dropdown diturunkan dari
+        // hasil Pages supaya tidak query facebook_pages dua kali.
+        if (pagesCache && videosCache) {
+          renderPages(pagesCache);
+          renderVideos(videosCache);
+          loadVideoPageOptions().catch((error) =>
+            setVideoManagerMessage(`Gagal memuat Facebook Page: ${error.message}`, "error"),
+          );
+          return;
+        }
+
+        const tasks = [];
+        if (!pagesCache) tasks.push(loadPages());
+        else renderPages(pagesCache);
+        if (!videosCache) tasks.push(loadVideos());
+        else renderVideos(videosCache);
+
+        await Promise.all(tasks);
+        loadVideoPageOptions().catch((error) =>
+          setVideoManagerMessage(`Gagal memuat Facebook Page: ${error.message}`, "error"),
+        );
       }
 
       const VIEW_NAMES = [
@@ -1514,9 +1573,15 @@
         });
       }
 
-      async function loadPages() {
+      async function loadPages(forceReload = false) {
         if (!accessGranted) return;
-        pagesTableBody.innerHTML = '<tr><td colspan="4" class="empty-row">Memuat data...</td></tr>';
+        if (!forceReload && pagesCache) { renderPages(pagesCache); return; }
+        if (forceReload) {
+          // Nama page berubah/hilang -> opsi dropdown dan tabel video ikut segarkan.
+          videoPageOptionsCache = null;
+          videosCache = null;
+        }
+        showSkeletonRows(pagesTableBody, 4, 5);
         setManagerMessage("");
 
         const { data, error } = await supabaseClient
@@ -1532,7 +1597,8 @@
         }
 
         pagesLoaded = true;
-        renderPages(data || []);
+        pagesCache = data || [];
+        renderPages(pagesCache);
       }
 
       function openEditForm(page) {
@@ -1567,7 +1633,7 @@
           publishSuffix = `, tetapi publish config gagal: ${publishError.message || "Kesalahan tidak diketahui"}. Tekan Publish Config untuk mencoba lagi`;
         }
 
-        await loadPages();
+        await loadPages(true);
         setManagerMessage(`Status Page berhasil diperbarui${publishSuffix}.`, publishType);
       }
 
@@ -1597,7 +1663,7 @@
           publishSuffix = ` Namun publish config gagal: ${publishError.message || "Kesalahan tidak diketahui"}. Tekan Publish Config di Overview untuk mencoba lagi.`;
         }
 
-        await loadPages();
+        await loadPages(true);
         setManagerMessage(`Facebook Page berhasil dihapus.${publishSuffix}`, publishType);
       }
 
@@ -1683,14 +1749,32 @@
       }
 
       async function loadVideoPageOptions(selectedPageId = "") {
-        const { data, error } = await supabaseClient
-          .from("facebook_pages")
-          .select("id, page_name")
-          .eq("is_active", true)
-          .order("page_name", { ascending: true });
+        // Pakai cache tabel Pages bila ada, supaya Overview tidak query
+        // facebook_pages dua kali.
+        if (pagesCache) {
+          videoPageOptionsCache = pagesCache
+            .filter((page) => page.is_active === true)
+            .map((page) => ({ id: page.id, page_name: page.page_name }))
+            .sort((a, b) => String(a.page_name).localeCompare(String(b.page_name)));
+          renderVideoPageOptions(videoPageOptionsCache, selectedPageId);
+          return;
+        }
 
-        if (error) throw error;
+        let data = videoPageOptionsCache;
+        if (!data) {
+          const result = await supabaseClient
+            .from("facebook_pages")
+            .select("id, page_name")
+            .eq("is_active", true)
+            .order("page_name", { ascending: true });
+          if (result.error) throw result.error;
+          data = result.data || [];
+          videoPageOptionsCache = data;
+        }
+        renderVideoPageOptions(data, selectedPageId);
+      }
 
+      function renderVideoPageOptions(data, selectedPageId = "") {
         videoPageSelect.replaceChildren();
         const defaultOption = document.createElement("option");
         defaultOption.value = "";
@@ -1810,9 +1894,10 @@
         });
       }
 
-      async function loadVideos() {
+      async function loadVideos(forceReload = false) {
         if (!accessGranted) return;
-        videosTableBody.innerHTML = '<tr><td colspan="8" class="empty-row">Memuat data...</td></tr>';
+        if (!forceReload && videosCache) { renderVideos(videosCache); return; }
+        showSkeletonRows(videosTableBody, 8, 5);
         setVideoManagerMessage("");
 
         const { data, error } = await supabaseClient
@@ -1827,7 +1912,9 @@
           return;
         }
 
-        renderVideos(data || []);
+        videosLoaded = true;
+        videosCache = data || [];
+        renderVideos(videosCache);
       }
 
       async function openVideoEditForm(video) {
@@ -1885,7 +1972,7 @@
             publishMessage = `Status video sudah berubah di database, tetapi publish config gagal: ${publishError.message || "Kesalahan tidak diketahui"}. Player mungkin masih menggunakan konfigurasi lama. Tekan Publish Config untuk mencoba lagi.`;
           }
 
-          await loadVideos();
+          await loadVideos(true);
           setVideoManagerMessage(publishMessage, publishMessageType);
         } catch (error) {
           console.error("Toggle video status error:", error);
@@ -1924,7 +2011,7 @@
           publishSuffix = ` Namun publish config gagal: ${publishError.message || "Kesalahan tidak diketahui"}. Tekan Publish Config untuk mencoba lagi.`;
         }
 
-        await loadVideos();
+        await loadVideos(true);
         setVideoManagerMessage(`Video berhasil dihapus.${publishSuffix}`, publishType);
       }
 
@@ -2089,6 +2176,8 @@
       document.getElementById("reloadAdsButton").addEventListener("click", () => loadAdsSettings(true));
       document.getElementById("reloadLpAdsButton").addEventListener("click", () => loadLpAdsSettings(true));
       document.getElementById("reloadHistatsButton").addEventListener("click", () => loadHistatsSettings(true));
+      document.getElementById("reloadPagesButton").addEventListener("click", () => loadPages(true));
+      document.getElementById("reloadVideosButton").addEventListener("click", () => loadVideos(true));
 
       function activateAdsTab(tabName) {
         document.querySelectorAll("[data-ads-tab]").forEach((button) => {
@@ -2161,7 +2250,7 @@
           if (result.error) throw result.error;
 
           videoForm.reset();
-          await loadVideos();
+          await loadVideos(true);
           await publishConfigAfterSave(videoId);
         } catch (error) {
           console.error("Save video error:", error);
@@ -2228,7 +2317,7 @@
 
           resetPageForm();
           const successMessage = wasEditing ? "Facebook Page berhasil diperbarui." : "Facebook Page berhasil ditambahkan.";
-          await loadPages();
+          await loadPages(true);
           setManagerMessage(`${successMessage} Menerbitkan config...`);
           try {
             const data = await publishConfigNow();
