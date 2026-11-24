@@ -94,6 +94,42 @@ function isHttpsUrlOrEmpty(value: unknown): value is string {
   }
 }
 
+function looksLikeBase64(value: string): boolean {
+  const compact = value.replace(/\s+/g, "");
+  return (
+    compact.length >= 16 &&
+    /^[A-Za-z0-9+/=_-]+$/.test(compact) &&
+    !/^https?:\/\//i.test(value.trim())
+  );
+}
+
+function decodeBase64Text(value: string): string | null {
+  try {
+    const compact = value
+      .replace(/\s+/g, "")
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+    const padded = compact + "=".repeat((4 - (compact.length % 4)) % 4);
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+  } catch {
+    return null;
+  }
+}
+
+// Direct link boleh dikirim sebagai URL HTTPS asli atau hasil Base64-nya.
+function isHttpsUrlOrBase64(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (!trimmed) return true;
+  if (isHttpsUrlOrEmpty(trimmed)) return true;
+  if (!looksLikeBase64(trimmed)) return false;
+
+  const decoded = decodeBase64Text(trimmed);
+  return decoded !== null && isHttpsUrlOrEmpty(decoded.trim());
+}
+
 function mergeAdSlot(
   incoming: unknown,
   existing: unknown,
@@ -188,8 +224,10 @@ function mergeDirect(
   }
 
   if (incoming.url !== undefined) {
-    if (!isHttpsUrlOrEmpty(incoming.url)) {
-      throw new Error(`Target URL direct link ${slotName} harus menggunakan HTTPS.`);
+    if (!isHttpsUrlOrBase64(incoming.url)) {
+      throw new Error(
+        `Target URL direct link ${slotName} harus menggunakan HTTPS atau Base64 dari URL HTTPS.`,
+      );
     }
     result.url = incoming.url.trim();
   }

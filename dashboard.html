@@ -811,13 +811,14 @@
                 <label class="setting-toggle"><input id="lpPopunderEnabled" type="checkbox"> Aktifkan popunder di LP</label>
                 <label class="field-label" for="lpPopunderScript">Script Popunder</label>
                 <textarea class="text-input" id="lpPopunderScript" rows="4" maxlength="5000" placeholder="&lt;script src='...'&gt;&lt;/script&gt;"></textarea>
+                <p class="video-help">Boleh tempel script asli atau hasil Base64-nya.</p>
               </section>
               <section class="ad-type-panel">
                 <h4>Direct Link LP</h4>
                 <label class="setting-toggle"><input id="lpDirectEnabled" type="checkbox"> Aktifkan direct link di LP</label>
                 <label class="field-label" for="lpDirectUrl">Target URL</label>
-                <input class="text-input" id="lpDirectUrl" type="url" maxlength="1000" placeholder="https://domain-iklan.com/direct-link">
-                <p class="video-help">Dibuka sekali per sesi saat pengunjung menekan Play.</p>
+                <input class="text-input" id="lpDirectUrl" type="url" maxlength="2000" placeholder="https://domain-iklan.com/direct-link">
+                <p class="video-help">Dibuka sekali per sesi saat pengunjung menekan Play. Boleh tempel URL asli atau hasil Base64-nya.</p>
               </section>
             </div>
 
@@ -851,13 +852,14 @@
                 <label class="setting-toggle"><input id="popunderAdEnabled" type="checkbox"> Aktifkan popunder</label>
                 <label class="field-label" for="popunderAdScript">Script Popunder</label>
                 <textarea class="text-input" id="popunderAdScript" rows="4" maxlength="5000" placeholder="&lt;script src='...'&gt;&lt;/script&gt;"></textarea>
+                <p class="video-help">Boleh tempel script asli atau hasil Base64-nya.</p>
               </section>
               <section class="ad-type-panel">
                 <h4>Direct Link</h4>
                 <label class="setting-toggle"><input id="directAdEnabled" type="checkbox"> Aktifkan direct link</label>
                 <label class="field-label" for="directAdUrl">Target URL</label>
-                <input class="text-input" id="directAdUrl" type="url" maxlength="1000" placeholder="https://domain-iklan.com/direct-link">
-                <p class="video-help">Dibuka sekali per sesi saat pengunjung menekan area video.</p>
+                <input class="text-input" id="directAdUrl" type="url" maxlength="2000" placeholder="https://domain-iklan.com/direct-link">
+                <p class="video-help">Dibuka sekali per sesi saat pengunjung menekan area video. Boleh tempel URL asli atau hasil Base64-nya.</p>
               </section>
             </div>
 
@@ -1109,16 +1111,55 @@
         return config;
       }
 
-      function validateAdScript(value, label, required) {
+      function looksLikeBase64(value) {
+        const compact = value.replace(/\s+/g, "");
+        return (
+          compact.length >= 16 &&
+          /^[A-Za-z0-9+/=_-]+$/.test(compact) &&
+          !/^https?:\/\//i.test(value.trim())
+        );
+      }
+
+      function decodeBase64Text(value) {
+        const compact = value
+          .replace(/\s+/g, "")
+          .replace(/-/g, "+")
+          .replace(/_/g, "/");
+        const padded = compact + "=".repeat((4 - (compact.length % 4)) % 4);
+        const binary = atob(padded);
+        return new TextDecoder().decode(
+          Uint8Array.from(binary, (char) => char.charCodeAt(0))
+        );
+      }
+
+      function tryDecodeBase64(value) {
+        try {
+          return decodeBase64Text(value);
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function validateAdScript(value, label, required, allowBase64 = false) {
         const trimmed = value.trim();
         if (!trimmed) {
           if (required) throw new Error(`Script iklan ${label} wajib diisi.`);
           return "";
         }
-        if (!/<script[\s>]/i.test(trimmed)) {
-          throw new Error(`Script iklan ${label} harus berisi tag <script>.`);
+        if (/<script[\s>]/i.test(trimmed)) {
+          return trimmed;
         }
-        return trimmed;
+        if (allowBase64 && looksLikeBase64(trimmed)) {
+          const decoded = tryDecodeBase64(trimmed);
+          if (decoded && /<script[\s>]/i.test(decoded)) {
+            return trimmed;
+          }
+        }
+        throw new Error(
+          allowBase64
+            ? `Script iklan ${label} harus berisi tag <script> atau hasil Base64 dari script tersebut.`
+            : `Script iklan ${label} harus berisi tag <script>.`
+        );
       }
 
       function applyAdSlotToForm(prefix, slot) {
@@ -1144,7 +1185,8 @@
         const script = validateAdScript(
           document.getElementById(`${prefix}Script`).value,
           `popunder ${label}`,
-          enabled
+          enabled,
+          true
         );
         return { enabled, script };
       }
@@ -1154,7 +1196,8 @@
         const url = validateHttpsUrl(
           document.getElementById(`${prefix}Url`).value,
           `Target URL direct link ${label}`,
-          enabled
+          enabled,
+          true
         );
         return { enabled, url };
       }
@@ -1223,13 +1266,41 @@
         }
       }
 
-      function validateHttpsUrl(value, label, required) {
+      function validateHttpsUrl(value, label, required, allowBase64 = false) {
         const trimmed = value.trim();
         if (!trimmed && !required) return "";
-        let parsed;
-        try { parsed = new URL(trimmed); } catch (_) { throw new Error(`${label} harus berupa URL HTTPS yang valid.`); }
-        if (parsed.protocol !== "https:") throw new Error(`${label} wajib menggunakan HTTPS.`);
-        return parsed.href;
+
+        const httpsOf = (candidate) => {
+          try {
+            const parsed = new URL(candidate);
+            if (parsed.protocol !== "https:") return { https: false };
+            return { https: true, href: parsed.href };
+          } catch (_) {
+            return null;
+          }
+        };
+
+        const direct = httpsOf(trimmed);
+        if (direct && direct.https) return direct.href;
+        if (direct && !direct.https) throw new Error(`${label} wajib menggunakan HTTPS.`);
+
+        if (allowBase64 && looksLikeBase64(trimmed)) {
+          const decoded = tryDecodeBase64(trimmed);
+          const fromBase64 = decoded ? httpsOf(decoded.trim()) : null;
+          if (fromBase64 && fromBase64.https) {
+            // Simpan string Base64 aslinya, bukan URL hasil decode.
+            return trimmed;
+          }
+          if (fromBase64 && !fromBase64.https) {
+            throw new Error(`${label} wajib menggunakan HTTPS.`);
+          }
+        }
+
+        throw new Error(
+          allowBase64
+            ? `${label} harus berupa URL HTTPS yang valid atau hasil Base64 dari URL tersebut.`
+            : `${label} harus berupa URL HTTPS yang valid.`
+        );
       }
 
       async function publishSettings(payload, button, messageElement, successLabel) {
