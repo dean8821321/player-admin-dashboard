@@ -873,21 +873,20 @@
         <header class="topbar">
           <div>
             <h1 class="page-title">Histats Settings</h1>
-            <p class="page-description">Atur kode tracking Histats untuk seluruh player.</p>
+            <p class="page-description">Atur kode tracking Histats untuk Player dan LP.</p>
           </div>
           <div class="status"><span class="status-dot"></span> Analytics</div>
         </header>
         <p class="manager-message" id="histatsMessage" role="status" aria-live="polite"></p>
         <form class="form-card" id="histatsForm" autocomplete="off">
           <h2>Konfigurasi Histats</h2>
-          <label class="setting-toggle"><input id="histatsEnabled" type="checkbox"> Aktifkan Histats</label>
+          <p class="video-help">Tempel snippet script Histats lengkap dari akun Histats kamu. Histats aktif di halaman yang dicentang.</p>
           <label class="field-label" for="histatsScript">Script Histats</label>
           <textarea class="text-input" id="histatsScript" rows="8" maxlength="5000" placeholder="&lt;!-- Histats.com  START  --&gt;&#10;&lt;script type=&quot;text/javascript&quot;&gt;...&lt;/script&gt;&#10;&lt;!-- Histats.com  END  --&gt;"></textarea>
           <div class="settings-grid settings-grid-small" style="margin-top:14px;">
             <label class="setting-toggle"><input id="histatsPlayerEnabled" type="checkbox"> Aktifkan di Player</label>
             <label class="setting-toggle"><input id="histatsLpEnabled" type="checkbox"> Aktifkan di LP</label>
           </div>
-          <p class="video-help">Tempel snippet script Histats lengkap dari akun Histats kamu. Script akan di-render apa adanya di halaman yang dipilih.</p>
           <div class="form-actions settings-actions"><button class="primary-button" id="saveHistatsButton" type="submit">Simpan &amp; Publish Histats</button><button class="secondary-button" id="reloadHistatsButton" type="button">Muat Ulang</button></div>
         </form>
       </section>
@@ -1256,7 +1255,6 @@
         try {
           const config = await loadCentralConfig(forceReload);
           const histats = config.histats && typeof config.histats === "object" ? config.histats : {};
-          document.getElementById("histatsEnabled").checked = histats.enabled === true;
           setInputValue("histatsScript", histats.script);
           const playerEnabled = histats.player !== undefined ? histats.player === true : histats.enabled === true;
           const lpEnabled = histats.lp !== undefined ? histats.lp === true : histats.enabled === true;
@@ -1361,18 +1359,15 @@
       async function saveHistatsSettings(event) {
         event.preventDefault();
         try {
-          const enabled = document.getElementById("histatsEnabled").checked;
+          const player = document.getElementById("histatsPlayerEnabled").checked;
+          const lp = document.getElementById("histatsLpEnabled").checked;
+          const enabled = player || lp;
           const script = validateAdScript(
             document.getElementById("histatsScript").value,
             "Histats",
             enabled
           );
-          const histats = {
-            enabled,
-            script,
-            player: document.getElementById("histatsPlayerEnabled").checked,
-            lp: document.getElementById("histatsLpEnabled").checked
-          };
+          const histats = { enabled, script, player, lp };
           await publishSettings({ histats }, saveHistatsButton, histatsMessage, "Pengaturan Histats");
         } catch (error) {
           setSettingsMessage(histatsMessage, error.message, "error");
