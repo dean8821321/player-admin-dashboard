@@ -782,11 +782,50 @@
         </header>
 
         <div class="ads-tabs" role="tablist">
-          <button class="ads-tab active" id="adsTabPlayer" type="button" role="tab" aria-controls="adsPlayerPanel" aria-selected="true" data-ads-tab="player">Iklan Player</button>
-          <button class="ads-tab" id="adsTabLp" type="button" role="tab" aria-controls="adsLpPanel" aria-selected="false" data-ads-tab="lp">Iklan LP</button>
+          <button class="ads-tab active" id="adsTabLp" type="button" role="tab" aria-controls="adsLpPanel" aria-selected="true" data-ads-tab="lp">Iklan LP</button>
+          <button class="ads-tab" id="adsTabPlayer" type="button" role="tab" aria-controls="adsPlayerPanel" aria-selected="false" data-ads-tab="player">Iklan Player</button>
         </div>
 
-        <div class="ads-tab-panel active" id="adsPlayerPanel" role="tabpanel" aria-labelledby="adsTabPlayer">
+        <div class="ads-tab-panel active" id="adsLpPanel" role="tabpanel" aria-labelledby="adsTabLp">
+          <form class="form-card" id="adsLpForm" autocomplete="off">
+            <p class="video-help">Tampil di halaman pembuka sebelum pengunjung masuk ke video. Tempel snippet script iklan penuh.</p>
+            <p class="manager-message" id="lpAdsMessage" role="status" aria-live="polite"></p>
+            <label class="setting-toggle"><input id="lpAdEnabled" type="checkbox"> Aktifkan iklan di halaman LP</label>
+            <div class="settings-grid">
+              <section class="settings-panel settings-panel-wide">
+                <h3>Banner LP</h3>
+                <label class="field-label" for="lpAdPosition">Posisi Iklan</label>
+                <select class="video-select" id="lpAdPosition">
+                  <option value="top">Atas kartu video</option>
+                  <option value="bottom">Bawah kartu video</option>
+                  <option value="both">Atas dan bawah</option>
+                </select>
+                <label class="field-label" for="lpAdScript">Script Iklan</label>
+                <textarea class="text-input" id="lpAdScript" rows="5" maxlength="5000" placeholder="&lt;script&gt;window.atOptions = {...}&lt;/script&gt;&#10;&lt;script src='...'&gt;&lt;/script&gt;"></textarea>
+              </section>
+            </div>
+
+            <div class="ad-type-grid">
+              <section class="ad-type-panel">
+                <h4>Popunder LP</h4>
+                <label class="setting-toggle"><input id="lpPopunderEnabled" type="checkbox"> Aktifkan popunder di LP</label>
+                <label class="field-label" for="lpPopunderScript">Script Popunder</label>
+                <textarea class="text-input" id="lpPopunderScript" rows="4" maxlength="5000" placeholder="&lt;script src='...'&gt;&lt;/script&gt;"></textarea>
+              </section>
+              <section class="ad-type-panel">
+                <h4>Direct Link LP</h4>
+                <label class="setting-toggle"><input id="lpDirectEnabled" type="checkbox"> Aktifkan direct link di LP</label>
+                <label class="field-label" for="lpDirectUrl">Target URL</label>
+                <input class="text-input" id="lpDirectUrl" type="url" maxlength="1000" placeholder="https://domain-iklan.com/direct-link">
+                <p class="video-help">Dibuka sekali per sesi saat pengunjung menekan Play.</p>
+              </section>
+            </div>
+
+            <div class="form-actions settings-actions"><button class="primary-button" id="saveLpAdsButton" type="submit">Simpan &amp; Publish Iklan LP</button><button class="secondary-button" id="reloadLpAdsButton" type="button">Muat Ulang</button></div>
+          </form>
+        </div>
+
+        <div class="ads-tab-panel" id="adsPlayerPanel" role="tabpanel" aria-labelledby="adsTabPlayer">
           <form class="form-card" id="adsPlayerForm" autocomplete="off">
             <p class="video-help">Tampil di dalam tab player, di atas dan di bawah video. Tempel snippet script iklan penuh.</p>
             <p class="manager-message" id="adsMessage" role="status" aria-live="polite"></p>
@@ -823,45 +862,6 @@
             </div>
 
             <div class="form-actions settings-actions"><button class="primary-button" id="saveAdsButton" type="submit">Simpan &amp; Publish Iklan Player</button><button class="secondary-button" id="reloadAdsButton" type="button">Muat Ulang</button></div>
-          </form>
-        </div>
-
-        <div class="ads-tab-panel" id="adsLpPanel" role="tabpanel" aria-labelledby="adsTabLp">
-          <form class="form-card" id="adsLpForm" autocomplete="off">
-            <p class="video-help">Tampil di halaman pembuka sebelum pengunjung masuk ke video. Tempel snippet script iklan penuh.</p>
-            <p class="manager-message" id="lpAdsMessage" role="status" aria-live="polite"></p>
-            <label class="setting-toggle"><input id="lpAdEnabled" type="checkbox"> Aktifkan iklan di halaman LP</label>
-            <div class="settings-grid">
-              <section class="settings-panel settings-panel-wide">
-                <h3>Banner LP</h3>
-                <label class="field-label" for="lpAdPosition">Posisi Iklan</label>
-                <select class="video-select" id="lpAdPosition">
-                  <option value="top">Atas kartu video</option>
-                  <option value="bottom">Bawah kartu video</option>
-                  <option value="both">Atas dan bawah</option>
-                </select>
-                <label class="field-label" for="lpAdScript">Script Iklan</label>
-                <textarea class="text-input" id="lpAdScript" rows="5" maxlength="5000" placeholder="&lt;script&gt;window.atOptions = {...}&lt;/script&gt;&#10;&lt;script src='...'&gt;&lt;/script&gt;"></textarea>
-              </section>
-            </div>
-
-            <div class="ad-type-grid">
-              <section class="ad-type-panel">
-                <h4>Popunder LP</h4>
-                <label class="setting-toggle"><input id="lpPopunderEnabled" type="checkbox"> Aktifkan popunder di LP</label>
-                <label class="field-label" for="lpPopunderScript">Script Popunder</label>
-                <textarea class="text-input" id="lpPopunderScript" rows="4" maxlength="5000" placeholder="&lt;script src='...'&gt;&lt;/script&gt;"></textarea>
-              </section>
-              <section class="ad-type-panel">
-                <h4>Direct Link LP</h4>
-                <label class="setting-toggle"><input id="lpDirectEnabled" type="checkbox"> Aktifkan direct link di LP</label>
-                <label class="field-label" for="lpDirectUrl">Target URL</label>
-                <input class="text-input" id="lpDirectUrl" type="url" maxlength="1000" placeholder="https://domain-iklan.com/direct-link">
-                <p class="video-help">Dibuka sekali per sesi saat pengunjung menekan Play.</p>
-              </section>
-            </div>
-
-            <div class="form-actions settings-actions"><button class="primary-button" id="saveLpAdsButton" type="submit">Simpan &amp; Publish Iklan LP</button><button class="secondary-button" id="reloadLpAdsButton" type="button">Muat Ulang</button></div>
           </form>
         </div>
       </section>
