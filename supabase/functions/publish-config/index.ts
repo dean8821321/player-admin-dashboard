@@ -310,6 +310,15 @@ function mergeHistatsSettings(
     result.scriptUrl = incoming.scriptUrl.trim();
   }
 
+  for (const placement of ["player", "lp"] as const) {
+    if (incoming[placement] !== undefined) {
+      if (typeof incoming[placement] !== "boolean") {
+        throw new Error(`Status Histats ${placement} harus ON/OFF.`);
+      }
+      result[placement] = incoming[placement];
+    }
+  }
+
   return result;
 }
 

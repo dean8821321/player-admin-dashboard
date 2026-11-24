@@ -901,11 +901,15 @@
         <p class="manager-message" id="histatsMessage" role="status" aria-live="polite"></p>
         <form class="form-card" id="histatsForm" autocomplete="off">
           <h2>Konfigurasi Histats</h2>
-          <label class="setting-toggle"><input id="histatsEnabled" type="checkbox"> Aktifkan Histats di seluruh player</label>
+          <label class="setting-toggle"><input id="histatsEnabled" type="checkbox"> Aktifkan Histats</label>
           <label class="field-label" for="histatsSiteId">Histats Site ID</label>
           <input class="text-input" id="histatsSiteId" type="text" maxlength="100" placeholder="Contoh: 1,5020708,4,0,0,0,00010000">
           <label class="field-label" for="histatsScriptUrl">Histats Script URL</label>
           <input class="text-input" id="histatsScriptUrl" type="url" maxlength="1000" placeholder="https://s10.histats.com/js15_as.js">
+          <div class="settings-grid settings-grid-small" style="margin-top:14px;">
+            <label class="setting-toggle"><input id="histatsPlayerEnabled" type="checkbox"> Aktifkan di Player</label>
+            <label class="setting-toggle"><input id="histatsLpEnabled" type="checkbox"> Aktifkan di LP</label>
+          </div>
           <p class="video-help">Gunakan Site ID dan URL script resmi dari akun Histats. URL wajib menggunakan HTTPS.</p>
           <div class="form-actions settings-actions"><button class="primary-button" id="saveHistatsButton" type="submit">Simpan &amp; Publish Histats</button><button class="secondary-button" id="reloadHistatsButton" type="button">Muat Ulang</button></div>
         </form>
@@ -1256,6 +1260,11 @@
           document.getElementById("histatsEnabled").checked = histats.enabled === true;
           setInputValue("histatsSiteId", histats.siteId);
           setInputValue("histatsScriptUrl", histats.scriptUrl);
+          // Default: kalau enabled=true tapi player/lp belum diset, aktifkan keduanya
+          const playerEnabled = histats.player !== undefined ? histats.player === true : histats.enabled === true;
+          const lpEnabled = histats.lp !== undefined ? histats.lp === true : histats.enabled === true;
+          document.getElementById("histatsPlayerEnabled").checked = playerEnabled;
+          document.getElementById("histatsLpEnabled").checked = lpEnabled;
           setSettingsMessage(histatsMessage, `Pengaturan berhasil dimuat. Versi config: ${config.version ?? "—"}.`, "success");
         } catch (error) {
           setSettingsMessage(histatsMessage, `Gagal memuat pengaturan Histats: ${error.message}`, "error");
@@ -1330,7 +1339,13 @@
           const siteId = document.getElementById("histatsSiteId").value.trim();
           const scriptUrl = validateHttpsUrl(document.getElementById("histatsScriptUrl").value, "Histats Script URL", enabled);
           if (enabled && !siteId) throw new Error("Histats Site ID wajib diisi saat Histats diaktifkan.");
-          const histats = { enabled, siteId, scriptUrl };
+          const histats = {
+            enabled,
+            siteId,
+            scriptUrl,
+            player: document.getElementById("histatsPlayerEnabled").checked,
+            lp: document.getElementById("histatsLpEnabled").checked
+          };
           await publishSettings({ histats }, saveHistatsButton, histatsMessage, "Pengaturan Histats");
         } catch (error) {
           setSettingsMessage(histatsMessage, error.message, "error");
