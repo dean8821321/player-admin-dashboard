@@ -149,6 +149,75 @@ function mergeAdSlot(
   return result;
 }
 
+function mergePopunder(
+  incoming: unknown,
+  existing: unknown,
+  slotName: string,
+): Record<string, unknown> {
+  const previous = isPlainObject(existing) ? existing : {};
+
+  if (incoming === undefined) return { ...previous };
+  if (!isPlainObject(incoming)) {
+    throw new Error(`Pengaturan popunder ${slotName} harus berupa objek.`);
+  }
+
+  const result: Record<string, unknown> = { ...previous };
+
+  if (incoming.enabled !== undefined) {
+    if (typeof incoming.enabled !== "boolean") {
+      throw new Error(`Status popunder ${slotName} harus ON/OFF.`);
+    }
+    result.enabled = incoming.enabled;
+  }
+
+  if (incoming.key !== undefined) {
+    if (typeof incoming.key !== "string" || incoming.key.length > 200) {
+      throw new Error(`Key popunder ${slotName} tidak valid.`);
+    }
+    result.key = incoming.key.trim();
+  }
+
+  if (incoming.scriptUrl !== undefined) {
+    if (!isHttpsUrlOrEmpty(incoming.scriptUrl)) {
+      throw new Error(`Script URL popunder ${slotName} harus menggunakan HTTPS.`);
+    }
+    result.scriptUrl = incoming.scriptUrl.trim();
+  }
+
+  return result;
+}
+
+function mergeDirect(
+  incoming: unknown,
+  existing: unknown,
+  slotName: string,
+): Record<string, unknown> {
+  const previous = isPlainObject(existing) ? existing : {};
+
+  if (incoming === undefined) return { ...previous };
+  if (!isPlainObject(incoming)) {
+    throw new Error(`Pengaturan direct link ${slotName} harus berupa objek.`);
+  }
+
+  const result: Record<string, unknown> = { ...previous };
+
+  if (incoming.enabled !== undefined) {
+    if (typeof incoming.enabled !== "boolean") {
+      throw new Error(`Status direct link ${slotName} harus ON/OFF.`);
+    }
+    result.enabled = incoming.enabled;
+  }
+
+  if (incoming.url !== undefined) {
+    if (!isHttpsUrlOrEmpty(incoming.url)) {
+      throw new Error(`Target URL direct link ${slotName} harus menggunakan HTTPS.`);
+    }
+    result.url = incoming.url.trim();
+  }
+
+  return result;
+}
+
 function mergeLpAdSlot(
   incoming: unknown,
   existing: unknown,
@@ -167,6 +236,11 @@ function mergeLpAdSlot(
 
   if (merged.position === undefined) {
     merged.position = "top";
+  }
+
+  if (isPlainObject(incoming)) {
+    merged.popunder = mergePopunder(incoming.popunder, isPlainObject(existing) ? (existing as Record<string, unknown>).popunder : {}, "LP");
+    merged.direct = mergeDirect(incoming.direct, isPlainObject(existing) ? (existing as Record<string, unknown>).direct : {}, "LP");
   }
 
   return merged;
@@ -193,6 +267,8 @@ function mergeAdsSettings(
 
   result.top = mergeAdSlot(incoming.top, previous.top, "Top Ad");
   result.bottom = mergeAdSlot(incoming.bottom, previous.bottom, "Bottom Ad");
+  result.popunder = mergePopunder(incoming.popunder, previous.popunder, "Player");
+  result.direct = mergeDirect(incoming.direct, previous.direct, "Player");
 
   if (incoming.lp !== undefined) {
     result.lp = mergeLpAdSlot(incoming.lp, previous.lp);
