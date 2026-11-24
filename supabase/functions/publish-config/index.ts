@@ -168,6 +168,13 @@ function mergeAdSlot(
     result.position = incoming.position;
   }
 
+  if (incoming.banner !== undefined) {
+    if (typeof incoming.banner !== "boolean") {
+      throw new Error(`Status banner ${slotName} harus ON/OFF.`);
+    }
+    result.banner = incoming.banner;
+  }
+
   return result;
 }
 

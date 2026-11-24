@@ -794,6 +794,7 @@
             <div class="settings-grid">
               <section class="settings-panel settings-panel-wide">
                 <h3>Banner LP</h3>
+                <label class="setting-toggle"><input id="lpAdBannerEnabled" type="checkbox"> Aktifkan banner di LP</label>
                 <label class="field-label" for="lpAdPosition">Posisi Iklan</label>
                 <select class="video-select" id="lpAdPosition">
                   <option value="top">Atas kartu video</option>
@@ -817,7 +818,7 @@
                 <h4>Direct Link LP</h4>
                 <label class="setting-toggle"><input id="lpDirectEnabled" type="checkbox"> Aktifkan direct link di LP</label>
                 <label class="field-label" for="lpDirectUrl">Target URL</label>
-                <input class="text-input" id="lpDirectUrl" type="url" maxlength="2000" placeholder="https://domain-iklan.com/direct-link">
+                <input class="text-input" id="lpDirectUrl" type="text" inputmode="url" maxlength="2000" placeholder="https://domain-iklan.com/direct-link">
                 <p class="video-help">Dibuka sekali per sesi saat pengunjung menekan Play. Boleh tempel URL asli atau hasil Base64-nya.</p>
               </section>
             </div>
@@ -858,7 +859,7 @@
                 <h4>Direct Link</h4>
                 <label class="setting-toggle"><input id="directAdEnabled" type="checkbox"> Aktifkan direct link</label>
                 <label class="field-label" for="directAdUrl">Target URL</label>
-                <input class="text-input" id="directAdUrl" type="url" maxlength="2000" placeholder="https://domain-iklan.com/direct-link">
+                <input class="text-input" id="directAdUrl" type="text" inputmode="url" maxlength="2000" placeholder="https://domain-iklan.com/direct-link">
                 <p class="video-help">Dibuka sekali per sesi saat pengunjung menekan area video. Boleh tempel URL asli atau hasil Base64-nya.</p>
               </section>
             </div>
@@ -1239,6 +1240,7 @@
           const ads = config.ads && typeof config.ads === "object" ? config.ads : {};
           const lp = ads.lp && typeof ads.lp === "object" ? ads.lp : {};
           document.getElementById("lpAdEnabled").checked = lp.enabled === true;
+          document.getElementById("lpAdBannerEnabled").checked = lp.banner !== false;
           setInputValue("lpAdPosition", lp.position === "bottom" || lp.position === "both" ? lp.position : "top");
           setInputValue("lpAdScript", lp.script);
           applyPopunderToForm("lpPopunder", lp.popunder);
@@ -1343,6 +1345,7 @@
         event.preventDefault();
         try {
           const lp = readAdSlotFromForm("lp", "LP");
+          lp.banner = document.getElementById("lpAdBannerEnabled").checked;
           lp.position = document.getElementById("lpAdPosition").value;
           if (!["top", "bottom", "both"].includes(lp.position)) {
             throw new Error("Posisi iklan LP tidak valid.");
